@@ -60,7 +60,7 @@ window.initialBmcToKelompok = [
 ];
 
 window.initialKelompokToBmc = [
-    { group: 'HAKUSHIKAI', category: 'SENJATA CLASS 1', item: 'CERAMIC', qty: '30 PCS', priceWO: 280000, priceW: 0, note: '-', ket: 'WITH JASA: TBA' },
+    { group: 'HAKUSHIKAI', category: 'SENJATA CLASS 1', item: 'CERAMIC', qty: '30 PCS', priceWO: 280000, priceW: 175000, note: '-', ket: 'WITH JASA: TBA' },
     { group: 'HAKUSHIKAI', category: 'SENJATA CLASS 1', item: 'REVOLVER', qty: '30 PCS', priceWO: 190000, priceW: 175000, note: '-', ket: '-' },
     { group: 'SHINIGAMI', category: 'SENJATA CLASS 1', item: 'CERAMIC', qty: 'UNLIMITED SELAGI ADA BAHAN', priceWO: 100000, priceW: 0, note: '-', ket: '-' },
     { group: 'H2', category: 'SENJATA CLASS 1', item: 'CERAMIC', qty: '500 PCS', priceWO: 80000, priceW: 0, note: '1:1', ket: '-' }
@@ -143,12 +143,14 @@ window.renderBrangkas = function() {
         tbody.innerHTML = '';
         for (let [itemName, qty] of Object.entries(window.brangkasState.items || {})) {
             totalItems += qty;
-            // DIBUAT KELAS KHUSUS 'btn-delete-brangkas' DAN DATA-NAME
+            // Menggunakan data-name untuk menyimpan nama, lebih aman dari error kutip/spasi
             tbody.innerHTML += `
                 <tr>
                     <td style="font-weight:600;">${itemName}</td>
                     <td><span class="badge badge-green">${qty} PCS</span></td>
-                    <td><button class="btn btn-sm btn-red btn-delete-brangkas" type="button" data-name="${itemName}">Hapus</button></td>
+                    <td>
+                        <button class="btn btn-sm btn-red btn-delete-item" type="button" data-name="${itemName}">Hapus</button>
+                    </td>
                 </tr>
             `;
         }
@@ -156,6 +158,14 @@ window.renderBrangkas = function() {
     const countEl = document.getElementById('stat-item-count');
     if (countEl) countEl.innerText = totalItems + ' PCS';
 };
+
+// Event Delegation: Menangani klik tombol hapus brangkas secara global
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('btn-delete-item')) {
+        const itemName = e.target.getAttribute('data-name');
+        window.deleteBrangkasItem(itemName);
+    }
+});
 
 window.renderMemberCatalog = function(filterText = '') {
     const tbody = document.getElementById('tbody-member-catalog');
@@ -229,7 +239,7 @@ window.renderCart = function() {
                     <input type="number" value="${item.qty}" min="1" style="width:50px;" class="form-control" onchange="window.updateCartQty(${index}, this.value)">
                 </td>
                 <td>${payType === 'UP' ? formatRP(subtotal) : formatUSD(subtotal)}</td>
-                <td><button class="btn btn-sm btn-red" type="button" onclick="window.removeFromCart(${index})">X</button></td>
+                <td><button class="btn btn-sm btn-red" onclick="window.removeFromCart(${index})">X</button></td>
             </tr>
         `;
     });
@@ -591,14 +601,6 @@ function initRealtimeSync() {
 window.addEventListener('DOMContentLoaded', () => {
     renderAll();
     initRealtimeSync();
-
-    // Event Delegation: Ini solusi "anti-pusing" buat tombol hapus agar tidak refresh/scroll
-    document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('btn-delete-brangkas')) {
-            const name = e.target.getAttribute('data-name');
-            window.deleteBrangkasItem(name);
-        }
-    });
 
     document.querySelectorAll('form').forEach(form => {
         form.addEventListener('submit', (e) => e.preventDefault());
