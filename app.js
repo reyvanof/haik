@@ -143,11 +143,12 @@ window.renderBrangkas = function() {
         tbody.innerHTML = '';
         for (let [itemName, qty] of Object.entries(window.brangkasState.items || {})) {
             totalItems += qty;
+            // DIBUAT KELAS KHUSUS 'btn-delete-brangkas' DAN DATA-NAME
             tbody.innerHTML += `
                 <tr>
                     <td style="font-weight:600;">${itemName}</td>
                     <td><span class="badge badge-green">${qty} PCS</span></td>
-                    <td><button class="btn btn-sm btn-red" type="button" onclick="event.preventDefault(); window.deleteBrangkasItem('${itemName}')">Hapus</button></td>
+                    <td><button class="btn btn-sm btn-red btn-delete-brangkas" type="button" data-name="${itemName}">Hapus</button></td>
                 </tr>
             `;
         }
@@ -228,7 +229,7 @@ window.renderCart = function() {
                     <input type="number" value="${item.qty}" min="1" style="width:50px;" class="form-control" onchange="window.updateCartQty(${index}, this.value)">
                 </td>
                 <td>${payType === 'UP' ? formatRP(subtotal) : formatUSD(subtotal)}</td>
-                <td><button class="btn btn-sm btn-red" onclick="window.removeFromCart(${index})">X</button></td>
+                <td><button class="btn btn-sm btn-red" type="button" onclick="window.removeFromCart(${index})">X</button></td>
             </tr>
         `;
     });
@@ -590,6 +591,14 @@ function initRealtimeSync() {
 window.addEventListener('DOMContentLoaded', () => {
     renderAll();
     initRealtimeSync();
+
+    // Event Delegation: Ini solusi "anti-pusing" buat tombol hapus agar tidak refresh/scroll
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('btn-delete-brangkas')) {
+            const name = e.target.getAttribute('data-name');
+            window.deleteBrangkasItem(name);
+        }
+    });
 
     document.querySelectorAll('form').forEach(form => {
         form.addEventListener('submit', (e) => e.preventDefault());
