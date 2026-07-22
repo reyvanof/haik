@@ -60,7 +60,7 @@ window.initialBmcToKelompok = [
 ];
 
 window.initialKelompokToBmc = [
-    { group: 'HAKUSHIKAI', category: 'SENJATA CLASS 1', item: 'CERAMIC', qty: '30 PCS', priceWO: 280000, priceW: 175000, note: '-', ket: 'WITH JASA: TBA' },
+    { group: 'HAKUSHIKAI', category: 'SENJATA CLASS 1', item: 'CERAMIC', qty: '30 PCS', priceWO: 280000, priceW: 0, note: '-', ket: 'WITH JASA: TBA' },
     { group: 'HAKUSHIKAI', category: 'SENJATA CLASS 1', item: 'REVOLVER', qty: '30 PCS', priceWO: 190000, priceW: 175000, note: '-', ket: '-' },
     { group: 'SHINIGAMI', category: 'SENJATA CLASS 1', item: 'CERAMIC', qty: 'UNLIMITED SELAGI ADA BAHAN', priceWO: 100000, priceW: 0, note: '-', ket: '-' },
     { group: 'H2', category: 'SENJATA CLASS 1', item: 'CERAMIC', qty: '500 PCS', priceWO: 80000, priceW: 0, note: '1:1', ket: '-' }
@@ -143,14 +143,12 @@ window.renderBrangkas = function() {
         tbody.innerHTML = '';
         for (let [itemName, qty] of Object.entries(window.brangkasState.items || {})) {
             totalItems += qty;
-            // Menggunakan data-name untuk menyimpan nama, lebih aman dari error kutip/spasi
+            // Diubah ke data-name untuk perbaikan klik
             tbody.innerHTML += `
                 <tr>
                     <td style="font-weight:600;">${itemName}</td>
                     <td><span class="badge badge-green">${qty} PCS</span></td>
-                    <td>
-                        <button class="btn btn-sm btn-red btn-delete-item" type="button" data-name="${itemName}">Hapus</button>
-                    </td>
+                    <td><button class="btn btn-sm btn-red btn-delete-item" type="button" data-name="${itemName}">Hapus</button></td>
                 </tr>
             `;
         }
@@ -159,10 +157,11 @@ window.renderBrangkas = function() {
     if (countEl) countEl.innerText = totalItems + ' PCS';
 };
 
-// Event Delegation: Menangani klik tombol hapus brangkas secara global
+// Tambahan Event Listener untuk memperbaiki masalah hapus
 document.addEventListener('click', function(e) {
-    if (e.target.classList.contains('btn-delete-item')) {
-        const itemName = e.target.getAttribute('data-name');
+    const btn = e.target.closest('.btn-delete-item');
+    if (btn) {
+        const itemName = btn.getAttribute('data-name');
         window.deleteBrangkasItem(itemName);
     }
 });
