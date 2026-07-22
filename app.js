@@ -147,7 +147,7 @@ window.switchTab = function(tabId) {
     const targetTab = document.getElementById(tabId);
     if (targetTab) targetTab.classList.add('active');
 
-    const btnTab = document.querySelector(`[onclick="switchTab('${tabId}')"]`);
+    const btnTab = document.querySelector(`[onclick="window.switchTab('${tabId}')"], [onclick="switchTab('${tabId}')"]`);
     if (btnTab) btnTab.classList.add('active');
 };
 
