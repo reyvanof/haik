@@ -411,7 +411,9 @@
         <button class="tab-btn admin-tab admin-only" id="btn-tab-dashboard" onclick="window.switchTab('dashboard')">📊 Dashboard & Brangkas</button>
         <button class="tab-btn admin-tab admin-only" id="btn-tab-bmc" onclick="window.switchTab('bmc-to-kelompok')">📦 Orderan: BMC ➔ Kelompok</button>
         <button class="tab-btn admin-tab admin-only" id="btn-tab-kelompok" onclick="window.switchTab('kelompok-to-bmc')">📥 Orderan: Kelompok ➔ BMC</button>
-        <button class="tab-btn admin-tab admin-only" id="btn-tab-tx" onclick="window.switchTab('transactions')">💰 Transaksi Masuk/Keluar</button>
+        <button class="tab-btn admin-tab admin-only" id="btn-tab-order-history" onclick="window.switchTab('order-history')">📋 Riwayat Order</button>
+        <button class="tab-btn admin-tab admin-only" id="btn-tab-tx-in" onclick="window.switchTab('transactions-in')">💵 Transaksi Masuk</button>
+        <button class="tab-btn admin-tab admin-only" id="btn-tab-tx-out" onclick="window.switchTab('transactions-out')">💸 Transaksi Keluar</button>
     </div>
 
     <main>
@@ -632,19 +634,90 @@
             </div>
         </div>
 
-        <!-- TAB TRANSAKSI -->
-        <div id="transactions" class="tab-content">
+        <!-- TAB RIWAYAT ORDER -->
+        <div id="order-history" class="tab-content">
             <div class="card">
                 <div class="card-header">
-                    <span class="card-title">💰 Riwayat Pengeluaran & Pemasukan (Sistem & Kas)</span>
-                    <button class="btn btn-sm btn-red" onclick="window.clearTransactions()">Hapus Semua Riwayat</button>
+                    <span class="card-title">📤 Riwayat Order: BMC ➔ Kelompok</span>
+                    <button
+                        class="btn btn-sm btn-red"
+                        type="button"
+                        onclick="window.clearOrderHistory('BMC_TO_KELOMPOK')"
+                    >
+                        Hapus Riwayat Ini
+                    </button>
                 </div>
+
                 <div class="table-responsive">
                     <table>
                         <thead>
                             <tr>
                                 <th>Waktu / Tanggal</th>
-                                <th>Tipe Transaksi</th>
+                                <th>Nama Kelompok</th>
+                                <th>Nama Barang</th>
+                                <th>QTY</th>
+                                <th>Harga Satuan</th>
+                                <th>Total</th>
+                                <th>Pembayaran</th>
+                                <th>Catatan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-order-history-bmc"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">📥 Riwayat Order: Kelompok ➔ BMC</span>
+                    <button
+                        class="btn btn-sm btn-red"
+                        type="button"
+                        onclick="window.clearOrderHistory('KELOMPOK_TO_BMC')"
+                    >
+                        Hapus Riwayat Ini
+                    </button>
+                </div>
+
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Waktu / Tanggal</th>
+                                <th>Nama Kelompok</th>
+                                <th>Nama Barang</th>
+                                <th>QTY</th>
+                                <th>Harga Satuan</th>
+                                <th>Total</th>
+                                <th>Pembayaran</th>
+                                <th>Catatan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-order-history-kelompok"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB TRANSAKSI MASUK -->
+        <div id="transactions-in" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">💵 Transaksi Masuk / Pemasukan</span>
+                    <button
+                        class="btn btn-sm btn-red"
+                        type="button"
+                        onclick="window.clearTransactionsByType('PEMASUKAN')"
+                    >
+                        Hapus Transaksi Masuk
+                    </button>
+                </div>
+
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Waktu / Tanggal</th>
                                 <th>Deskripsi Kas / Item</th>
                                 <th>QTY</th>
                                 <th>Nominal Payment</th>
@@ -652,7 +725,39 @@
                                 <th>Keterangan / Notes</th>
                             </tr>
                         </thead>
-                        <tbody id="tbody-transactions"></tbody>
+                        <tbody id="tbody-transactions-in"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB TRANSAKSI KELUAR -->
+        <div id="transactions-out" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">💸 Transaksi Keluar / Pengeluaran</span>
+                    <button
+                        class="btn btn-sm btn-red"
+                        type="button"
+                        onclick="window.clearTransactionsByType('PENGELUARAN')"
+                    >
+                        Hapus Transaksi Keluar
+                    </button>
+                </div>
+
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Waktu / Tanggal</th>
+                                <th>Deskripsi Kas / Item</th>
+                                <th>QTY</th>
+                                <th>Nominal Payment</th>
+                                <th>Jenis Kas</th>
+                                <th>Keterangan / Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-transactions-out"></tbody>
                     </table>
                 </div>
             </div>
@@ -685,6 +790,7 @@
                 <input type="hidden" id="modal-price-bm">
                 <input type="hidden" id="modal-price-up">
                 <input type="hidden" id="modal-order-type">
+                <input type="hidden" id="modal-order-group">
 
                 <div class="form-group">
                     <label>Nama Barang</label>
