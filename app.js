@@ -481,40 +481,74 @@ window.calcModalTotal = function() {
 
 window.processTransaction = async function(e) {
     if (e) e.preventDefault();
+
     const type = document.getElementById('modal-order-type').value;
-    const itemName = document.getElementById('modal-item-name').value;
-    const qty = parseInt(document.getElementById('modal-qty').value) || 1;
+    const itemName = normalizeItemName(document.getElementById('modal-item-name').value);
+    const qty = parseInt(document.getElementById('modal-qty').value, 10) || 1;
     const payType = document.getElementById('modal-pay-type').value;
     const priceUP = parseFloat(document.getElementById('modal-price-up').value) || 0;
     const priceBM = parseFloat(document.getElementById('modal-price-bm').value) || 0;
-    const notes = document.getElementById('modal-notes').value || '-';
+    const notes = document.getElementById('modal-notes').value.trim() || '-';
+
+    if (type !== 'BMC_TO_KELOMPOK' && type !== 'KELOMPOK_TO_BMC') {
+        return alert('❌ Jenis order tidak dikenali. Silakan tutup lalu buka kembali order.');
+    }
 
     const unitPrice = payType === 'UP' ? priceUP : priceBM;
     const total = unitPrice * qty;
-    const isIncome = type === 'BMC_TO_KELOMPOK';
+    const isBmcToKelompok = type === 'BMC_TO_KELOMPOK';
 
-    if (isIncome) {
-        if (payType === 'UP') window.brangkasState.whiteMoney += total;
-        else window.brangkasState.blackMoney += total;
+    // Pastikan state selalu siap sebelum transaksi diproses.
+    if (!window.brangkasState) {
+        window.brangkasState = { whiteMoney: 0, blackMoney: 0, redMoney: 0, items: {} };
+    }
+    if (!window.brangkasState.items) window.brangkasState.items = {};
+    if (!Array.isArray(window.transactionsData)) window.transactionsData = [];
+
+    normalizeBrangkasItems();
+    const currentStock = Number(window.brangkasState.items[itemName]) || 0;
+
+    if (isBmcToKelompok) {
+        // BMC menjual barang: uang masuk dan stok barang keluar.
+        if (payType === 'UP') {
+            window.brangkasState.whiteMoney = (Number(window.brangkasState.whiteMoney) || 0) + total;
+        } else {
+            window.brangkasState.blackMoney = (Number(window.brangkasState.blackMoney) || 0) + total;
+        }
+        window.brangkasState.items[itemName] = Math.max(0, currentStock - qty);
     } else {
-        if (payType === 'UP') window.brangkasState.whiteMoney = Math.max(0, window.brangkasState.whiteMoney - total);
-        else window.brangkasState.blackMoney = Math.max(0, window.brangkasState.blackMoney - total);
+        // BMC membeli barang: uang keluar dan stok barang masuk.
+        if (payType === 'UP') {
+            window.brangkasState.whiteMoney = Math.max(0, (Number(window.brangkasState.whiteMoney) || 0) - total);
+        } else {
+            window.brangkasState.blackMoney = Math.max(0, (Number(window.brangkasState.blackMoney) || 0) - total);
+        }
+        window.brangkasState.items[itemName] = currentStock + qty;
     }
 
-    window.transactionsData.unshift({
+    const transactionRecord = {
         time: new Date().toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' }),
-        type: isIncome ? 'PEMASUKAN' : 'PENGELUARAN',
+        type: isBmcToKelompok ? 'PEMASUKAN' : 'PENGELUARAN',
         item: itemName,
         qty: qty,
         total: payType === 'UP' ? formatRP(total) : formatUSD(total),
         payType: payType === 'UP' ? 'Uang Putih' : 'Black Money',
-        notes: notes
-    });
+        notes: `${isBmcToKelompok ? 'BMC ➔ Kelompok' : 'Kelompok ➔ BMC'} | ${notes}`
+    };
 
+    // Buat array baru supaya perubahan transaksi langsung terbaca oleh renderer
+    // dan ikut tersimpan secara utuh ke Firestore.
+    window.transactionsData = [transactionRecord, ...window.transactionsData];
+
+    // Tampilkan langsung, kemudian simpan permanen ke Firestore.
+    window.renderTransactions();
+    window.renderBrangkas();
     await window.saveData();
     renderAll();
+
+    document.getElementById('modal-notes').value = '';
     window.closeModal('modal-sell');
-    alert('✅ Transaksi Berhasil Processed!');
+    alert(`✅ Transaksi ${isBmcToKelompok ? 'BMC ke Kelompok' : 'Kelompok ke BMC'} berhasil dicatat!`);
 };
 
 window.openCustomOrderModal = function(target) {
