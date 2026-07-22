@@ -77,30 +77,11 @@ window.cartItems = [];
 window.bmcToKelompokData = [...window.initialBmcToKelompok];
 window.kelompokToBmcData = [...window.initialKelompokToBmc];
 window.transactionsData = [];
+window.orderHistoryData = [];
 
 // HELPER FORMAT
 function formatRP(num) { return (!num || num === 0) ? 'Rp 0' : 'Rp ' + Number(num).toLocaleString('id-ID'); }
 function formatUSD(num) { return (!num || num === 0) ? '$ ' + Number(num).toLocaleString('en-US') : '$ ' + Number(num).toLocaleString('en-US'); }
-
-// Menyamakan penulisan nama barang agar "vest", "VEST", atau " Vest "
-// selalu dianggap sebagai barang yang sama.
-function normalizeItemName(name) {
-    return String(name || '').trim().toUpperCase();
-}
-
-function normalizeBrangkasItems() {
-    const normalizedItems = {};
-
-    Object.entries(window.brangkasState.items || {}).forEach(([name, qty]) => {
-        const normalizedName = normalizeItemName(name);
-        if (!normalizedName) return;
-
-        normalizedItems[normalizedName] =
-            (normalizedItems[normalizedName] || 0) + (Number(qty) || 0);
-    });
-
-    window.brangkasState.items = normalizedItems;
-}
 
 // SYSTEM TAB & PERAN
 window.switchTab = function(tabId) {
@@ -150,9 +131,6 @@ window.closeModal = function(modalId) {
 
 // RENDER FUNCTIONS - TERBARU
 window.renderBrangkas = function() {
-    // Gabungkan item yang penulisannya berbeda huruf besar/kecil atau memiliki spasi.
-    normalizeBrangkasItems();
-
     const wEl = document.getElementById('stat-white-money');
     if (wEl) wEl.innerText = formatRP(window.brangkasState.whiteMoney);
     const bEl = document.getElementById('stat-black-money');
@@ -308,19 +286,14 @@ window.checkoutMemberCart = async function() {
     let grandTotal = 0;
     let itemSummary = [];
 
-    // Pastikan seluruh nama stok memakai format yang sama sebelum dikurangi.
-    normalizeBrangkasItems();
-
     window.cartItems.forEach(item => {
         const price = payType === 'UP' ? item.priceUP : item.priceBM;
         const subtotal = price * item.qty;
         grandTotal += subtotal;
         itemSummary.push(`${item.name} x${item.qty}`);
 
-        const stockKey = normalizeItemName(item.name);
-        if (Object.prototype.hasOwnProperty.call(window.brangkasState.items, stockKey)) {
-            const currentStock = Number(window.brangkasState.items[stockKey]) || 0;
-            window.brangkasState.items[stockKey] = Math.max(0, currentStock - item.qty);
+        if (window.brangkasState.items[item.name]) {
+            window.brangkasState.items[item.name] = Math.max(0, window.brangkasState.items[item.name] - item.qty);
         }
     });
 
@@ -359,8 +332,7 @@ window.toggleBrangkasType = function() {
 window.saveBrangkas = async function(e) {
     if (e) e.preventDefault();
     const type = document.getElementById('b-type').value;
-    const rawItemName = document.getElementById('b-item-name').value;
-    const itemName = normalizeItemName(rawItemName);
+    const itemName = document.getElementById('b-item-name').value;
     const qty = parseInt(document.getElementById('b-qty').value) || 0;
     const action = document.getElementById('b-action').value;
     const notes = document.getElementById('b-notes').value || '-';
@@ -368,10 +340,8 @@ window.saveBrangkas = async function(e) {
     if (type === 'item') {
         if (!itemName) return alert('Masukkan nama item!');
         if (!window.brangkasState.items) window.brangkasState.items = {};
-
-        // Satukan data lama seperti "vest" dan "VEST" sebelum stok diperbarui.
-        normalizeBrangkasItems();
-        let current = Number(window.brangkasState.items[itemName]) || 0;
+        
+        let current = window.brangkasState.items[itemName] || 0;
         if (action === 'add') window.brangkasState.items[itemName] = current + qty;
         else if (action === 'sub') window.brangkasState.items[itemName] = Math.max(0, current - qty);
         else if (action === 'set') window.brangkasState.items[itemName] = qty;
@@ -460,6 +430,7 @@ window.openSellModal = function(type, index) {
     document.getElementById('modal-price-up').value = itemData.priceWO || itemData.priceW || 0;
     document.getElementById('modal-price-bm').value = itemData.priceWO || itemData.priceW || 0;
     document.getElementById('modal-order-type').value = type;
+    document.getElementById('modal-order-group').value = itemData.group || '-';
     document.getElementById('modal-qty').value = 1;
 
     window.calcModalTotal();
@@ -483,6 +454,7 @@ window.processTransaction = async function(e) {
     if (e) e.preventDefault();
 
     const type = document.getElementById('modal-order-type').value;
+    const groupName = (document.getElementById('modal-order-group').value || '-').trim();
     const itemName = normalizeItemName(document.getElementById('modal-item-name').value);
     const qty = parseInt(document.getElementById('modal-qty').value, 10) || 1;
     const payType = document.getElementById('modal-pay-type').value;
@@ -498,57 +470,71 @@ window.processTransaction = async function(e) {
     const total = unitPrice * qty;
     const isBmcToKelompok = type === 'BMC_TO_KELOMPOK';
 
-    // Pastikan state selalu siap sebelum transaksi diproses.
     if (!window.brangkasState) {
         window.brangkasState = { whiteMoney: 0, blackMoney: 0, redMoney: 0, items: {} };
     }
     if (!window.brangkasState.items) window.brangkasState.items = {};
-    if (!Array.isArray(window.transactionsData)) window.transactionsData = [];
+    if (!Array.isArray(window.orderHistoryData)) window.orderHistoryData = [];
 
     normalizeBrangkasItems();
     const currentStock = Number(window.brangkasState.items[itemName]) || 0;
 
     if (isBmcToKelompok) {
-        // BMC menjual barang: uang masuk dan stok barang keluar.
+        // BMC menjual barang ke kelompok: uang bertambah dan stok berkurang.
         if (payType === 'UP') {
-            window.brangkasState.whiteMoney = (Number(window.brangkasState.whiteMoney) || 0) + total;
+            window.brangkasState.whiteMoney =
+                (Number(window.brangkasState.whiteMoney) || 0) + total;
         } else {
-            window.brangkasState.blackMoney = (Number(window.brangkasState.blackMoney) || 0) + total;
+            window.brangkasState.blackMoney =
+                (Number(window.brangkasState.blackMoney) || 0) + total;
         }
+
         window.brangkasState.items[itemName] = Math.max(0, currentStock - qty);
     } else {
-        // BMC membeli barang: uang keluar dan stok barang masuk.
+        // BMC membeli barang dari kelompok: uang berkurang dan stok bertambah.
         if (payType === 'UP') {
-            window.brangkasState.whiteMoney = Math.max(0, (Number(window.brangkasState.whiteMoney) || 0) - total);
+            window.brangkasState.whiteMoney = Math.max(
+                0,
+                (Number(window.brangkasState.whiteMoney) || 0) - total
+            );
         } else {
-            window.brangkasState.blackMoney = Math.max(0, (Number(window.brangkasState.blackMoney) || 0) - total);
+            window.brangkasState.blackMoney = Math.max(
+                0,
+                (Number(window.brangkasState.blackMoney) || 0) - total
+            );
         }
+
         window.brangkasState.items[itemName] = currentStock + qty;
     }
 
-    const transactionRecord = {
-        time: new Date().toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' }),
-        type: isBmcToKelompok ? 'PEMASUKAN' : 'PENGELUARAN',
+    const orderRecord = {
+        time: new Date().toLocaleString('id-ID', {
+            dateStyle: 'short',
+            timeStyle: 'short'
+        }),
+        direction: type,
+        group: groupName,
         item: itemName,
         qty: qty,
+        unitPrice: payType === 'UP' ? formatRP(unitPrice) : formatUSD(unitPrice),
         total: payType === 'UP' ? formatRP(total) : formatUSD(total),
         payType: payType === 'UP' ? 'Uang Putih' : 'Black Money',
-        notes: `${isBmcToKelompok ? 'BMC ➔ Kelompok' : 'Kelompok ➔ BMC'} | ${notes}`
+        notes: notes
     };
 
-    // Buat array baru supaya perubahan transaksi langsung terbaca oleh renderer
-    // dan ikut tersimpan secara utuh ke Firestore.
-    window.transactionsData = [transactionRecord, ...window.transactionsData];
+    // Order masuk ke panel Riwayat Order, bukan ke transaksi masuk/keluar.
+    window.orderHistoryData = [orderRecord, ...window.orderHistoryData];
 
-    // Tampilkan langsung, kemudian simpan permanen ke Firestore.
-    window.renderTransactions();
-    window.renderBrangkas();
     await window.saveData();
     renderAll();
 
     document.getElementById('modal-notes').value = '';
     window.closeModal('modal-sell');
-    alert(`✅ Transaksi ${isBmcToKelompok ? 'BMC ke Kelompok' : 'Kelompok ke BMC'} berhasil dicatat!`);
+
+    alert(
+        `✅ Order ${isBmcToKelompok ? 'BMC ke Kelompok' : 'Kelompok ke BMC'} ` +
+        'berhasil dicatat di Riwayat Order!'
+    );
 };
 
 window.openCustomOrderModal = function(target) {
@@ -583,40 +569,212 @@ window.saveCustomOrder = async function(e) {
     alert('✅ Order Custom Berhasil Ditambahkan!');
 };
 
-window.renderTransactions = function() {
-    const tbody = document.getElementById('tbody-transactions');
+function renderTransactionRows(tbodyId, transactionType) {
+    const tbody = document.getElementById(tbodyId);
     if (!tbody) return;
-    tbody.innerHTML = '';
-    window.transactionsData.forEach(tx => {
-        const isIncome = tx.type === 'PEMASUKAN';
-        tbody.innerHTML += `
+
+    const filteredTransactions = (window.transactionsData || []).filter(
+        tx => tx.type === transactionType
+    );
+
+    if (filteredTransactions.length === 0) {
+        const emptyText = transactionType === 'PEMASUKAN'
+            ? 'Belum ada transaksi masuk.'
+            : 'Belum ada transaksi keluar.';
+
+        tbody.innerHTML = `
             <tr>
-                <td style="color:var(--text-muted); font-size:0.85rem;">${tx.time}</td>
-                <td><span class="badge ${isIncome ? 'badge-green' : 'badge-red'}">${tx.type}</span></td>
-                <td style="font-weight:600;">${tx.item}</td>
-                <td>${tx.qty} PCS</td>
-                <td style="font-weight:bold; color:${isIncome ? 'var(--accent-green)' : 'var(--accent-red)'};">${tx.total}</td>
-                <td><span class="badge badge-black">${tx.payType}</span></td>
-                <td style="color:var(--text-muted); font-size:0.85rem;">${tx.notes}</td>
+                <td colspan="6" style="text-align:center; color:var(--text-muted);">
+                    ${emptyText}
+                </td>
             </tr>
         `;
-    });
+        return;
+    }
+
+    tbody.innerHTML = filteredTransactions.map(tx => `
+        <tr>
+            <td style="color:var(--text-muted); font-size:0.85rem;">${tx.time}</td>
+            <td style="font-weight:600;">${tx.item}</td>
+            <td>${tx.qty} PCS</td>
+            <td style="font-weight:bold; color:${
+                transactionType === 'PEMASUKAN'
+                    ? 'var(--accent-green)'
+                    : 'var(--accent-red)'
+            };">
+                ${tx.total}
+            </td>
+            <td><span class="badge badge-black">${tx.payType}</span></td>
+            <td style="color:var(--text-muted); font-size:0.85rem;">${tx.notes}</td>
+        </tr>
+    `).join('');
+}
+
+window.renderIncomingTransactions = function() {
+    renderTransactionRows('tbody-transactions-in', 'PEMASUKAN');
 };
 
-window.clearTransactions = async function() {
-    if (confirm('Apakah Anda yakin ingin menghapus seluruh riwayat transaksi?')) {
-        window.transactionsData = [];
-        await window.saveData();
-        renderAll();
-    }
+window.renderOutgoingTransactions = function() {
+    renderTransactionRows('tbody-transactions-out', 'PENGELUARAN');
 };
+
+window.renderOrderHistory = function() {
+    const bmcToGroupBody = document.getElementById('tbody-order-history-bmc');
+    const groupToBmcBody = document.getElementById('tbody-order-history-kelompok');
+
+    if (!bmcToGroupBody || !groupToBmcBody) return;
+
+    const buildRows = (records, emptyText) => {
+        if (records.length === 0) {
+            return `
+                <tr>
+                    <td colspan="8" style="text-align:center; color:var(--text-muted);">
+                        ${emptyText}
+                    </td>
+                </tr>
+            `;
+        }
+
+        return records.map(order => `
+            <tr>
+                <td style="color:var(--text-muted); font-size:0.85rem;">
+                    ${order.time}
+                </td>
+                <td style="font-weight:bold; color:var(--accent-gold);">
+                    ${order.group || '-'}
+                </td>
+                <td style="font-weight:600;">${order.item}</td>
+                <td>${order.qty} PCS</td>
+                <td>${order.unitPrice || '-'}</td>
+                <td style="font-weight:bold; color:var(--accent-green);">
+                    ${order.total}
+                </td>
+                <td><span class="badge badge-black">${order.payType}</span></td>
+                <td style="color:var(--text-muted); font-size:0.85rem;">
+                    ${order.notes || '-'}
+                </td>
+            </tr>
+        `).join('');
+    };
+
+    const bmcToGroup = (window.orderHistoryData || []).filter(
+        order => order.direction === 'BMC_TO_KELOMPOK'
+    );
+
+    const groupToBmc = (window.orderHistoryData || []).filter(
+        order => order.direction === 'KELOMPOK_TO_BMC'
+    );
+
+    bmcToGroupBody.innerHTML = buildRows(
+        bmcToGroup,
+        'Belum ada order BMC ke Kelompok yang diproses.'
+    );
+
+    groupToBmcBody.innerHTML = buildRows(
+        groupToBmc,
+        'Belum ada order Kelompok ke BMC yang diproses.'
+    );
+};
+
+window.clearTransactionsByType = async function(transactionType) {
+    const label = transactionType === 'PEMASUKAN'
+        ? 'transaksi masuk'
+        : 'transaksi keluar';
+
+    if (!confirm(`Apakah Anda yakin ingin menghapus seluruh ${label}?`)) return;
+
+    window.transactionsData = (window.transactionsData || []).filter(
+        tx => tx.type !== transactionType
+    );
+
+    await window.saveData();
+    renderAll();
+};
+
+window.clearOrderHistory = async function(direction) {
+    const label = direction === 'BMC_TO_KELOMPOK'
+        ? 'riwayat order BMC ke Kelompok'
+        : 'riwayat order Kelompok ke BMC';
+
+    if (!confirm(`Apakah Anda yakin ingin menghapus seluruh ${label}?`)) return;
+
+    window.orderHistoryData = (window.orderHistoryData || []).filter(
+        order => order.direction !== direction
+    );
+
+    await window.saveData();
+    renderAll();
+};
+
+// Pindahkan riwayat order lama dari transaksi campuran ke panel khusus.
+function migrateLegacyOrderTransactions() {
+    if (!Array.isArray(window.transactionsData)) window.transactionsData = [];
+    if (!Array.isArray(window.orderHistoryData)) window.orderHistoryData = [];
+
+    const migratedOrders = [];
+    const remainingTransactions = [];
+
+    window.transactionsData.forEach(tx => {
+        const notes = String(tx.notes || '');
+        let direction = null;
+
+        if (
+            notes.includes('BMC ➔ Kelompok') ||
+            notes.includes('BMC -> Kelompok')
+        ) {
+            direction = 'BMC_TO_KELOMPOK';
+        } else if (
+            notes.includes('Kelompok ➔ BMC') ||
+            notes.includes('Kelompok -> BMC')
+        ) {
+            direction = 'KELOMPOK_TO_BMC';
+        }
+
+        if (!direction) {
+            remainingTransactions.push(tx);
+            return;
+        }
+
+        const cleanedNotes = notes
+            .replace('BMC ➔ Kelompok', '')
+            .replace('BMC -> Kelompok', '')
+            .replace('Kelompok ➔ BMC', '')
+            .replace('Kelompok -> BMC', '')
+            .replace(/^\s*\|\s*/, '')
+            .trim() || '-';
+
+        migratedOrders.push({
+            time: tx.time,
+            direction: direction,
+            group: '-',
+            item: tx.item,
+            qty: tx.qty,
+            unitPrice: '-',
+            total: tx.total,
+            payType: tx.payType,
+            notes: cleanedNotes
+        });
+    });
+
+    if (migratedOrders.length === 0) return false;
+
+    window.transactionsData = remainingTransactions;
+    window.orderHistoryData = [
+        ...migratedOrders,
+        ...window.orderHistoryData
+    ];
+
+    return true;
+}
 
 function renderAll() {
     window.renderBrangkas();
     window.renderMemberCatalog();
     window.renderBmcToKelompok();
     window.renderKelompokToBmc();
-    window.renderTransactions();
+    window.renderOrderHistory();
+    window.renderIncomingTransactions();
+    window.renderOutgoingTransactions();
 }
 
 // SYNC FIREBASE
@@ -633,6 +791,7 @@ async function saveDataToCloud() {
             bmcToKelompokData: window.bmcToKelompokData,
             kelompokToBmcData: window.kelompokToBmcData,
             transactionsData: window.transactionsData,
+            orderHistoryData: window.orderHistoryData,
             lastUpdated: new Date().toISOString()
         });
         console.log("✅ Update data ke Firestore BERHASIL.");
@@ -655,14 +814,20 @@ function initRealtimeSync() {
             window.bmcToKelompokData = data.bmcToKelompokData || window.initialBmcToKelompok;
             window.kelompokToBmcData = data.kelompokToBmcData || window.initialKelompokToBmc;
             window.transactionsData = data.transactionsData || [];
+            window.orderHistoryData = data.orderHistoryData || [];
         } else {
             console.log("ℹ️ Dokumen Firestore belum ada, membuat dokumen awal...");
+            window.orderHistoryData = [];
             isInitialLoadComplete = true;
             saveDataToCloud();
         }
-        
+        const legacyOrdersMoved = migrateLegacyOrderTransactions();
         isInitialLoadComplete = true;
         renderAll();
+
+        if (legacyOrdersMoved) {
+            saveDataToCloud();
+        }
     }, (error) => {
         console.error("❌ Firebase Realtime Error:", error);
         if (statusEl) {
