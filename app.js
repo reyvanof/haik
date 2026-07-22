@@ -82,6 +82,26 @@ window.transactionsData = [];
 function formatRP(num) { return (!num || num === 0) ? 'Rp 0' : 'Rp ' + Number(num).toLocaleString('id-ID'); }
 function formatUSD(num) { return (!num || num === 0) ? '$ ' + Number(num).toLocaleString('en-US') : '$ ' + Number(num).toLocaleString('en-US'); }
 
+// Menyamakan penulisan nama barang agar "vest", "VEST", atau " Vest "
+// selalu dianggap sebagai barang yang sama.
+function normalizeItemName(name) {
+    return String(name || '').trim().toUpperCase();
+}
+
+function normalizeBrangkasItems() {
+    const normalizedItems = {};
+
+    Object.entries(window.brangkasState.items || {}).forEach(([name, qty]) => {
+        const normalizedName = normalizeItemName(name);
+        if (!normalizedName) return;
+
+        normalizedItems[normalizedName] =
+            (normalizedItems[normalizedName] || 0) + (Number(qty) || 0);
+    });
+
+    window.brangkasState.items = normalizedItems;
+}
+
 // SYSTEM TAB & PERAN
 window.switchTab = function(tabId) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -130,6 +150,9 @@ window.closeModal = function(modalId) {
 
 // RENDER FUNCTIONS - TERBARU
 window.renderBrangkas = function() {
+    // Gabungkan item yang penulisannya berbeda huruf besar/kecil atau memiliki spasi.
+    normalizeBrangkasItems();
+
     const wEl = document.getElementById('stat-white-money');
     if (wEl) wEl.innerText = formatRP(window.brangkasState.whiteMoney);
     const bEl = document.getElementById('stat-black-money');
@@ -285,14 +308,19 @@ window.checkoutMemberCart = async function() {
     let grandTotal = 0;
     let itemSummary = [];
 
+    // Pastikan seluruh nama stok memakai format yang sama sebelum dikurangi.
+    normalizeBrangkasItems();
+
     window.cartItems.forEach(item => {
         const price = payType === 'UP' ? item.priceUP : item.priceBM;
         const subtotal = price * item.qty;
         grandTotal += subtotal;
         itemSummary.push(`${item.name} x${item.qty}`);
 
-        if (window.brangkasState.items[item.name]) {
-            window.brangkasState.items[item.name] = Math.max(0, window.brangkasState.items[item.name] - item.qty);
+        const stockKey = normalizeItemName(item.name);
+        if (Object.prototype.hasOwnProperty.call(window.brangkasState.items, stockKey)) {
+            const currentStock = Number(window.brangkasState.items[stockKey]) || 0;
+            window.brangkasState.items[stockKey] = Math.max(0, currentStock - item.qty);
         }
     });
 
@@ -331,7 +359,8 @@ window.toggleBrangkasType = function() {
 window.saveBrangkas = async function(e) {
     if (e) e.preventDefault();
     const type = document.getElementById('b-type').value;
-    const itemName = document.getElementById('b-item-name').value;
+    const rawItemName = document.getElementById('b-item-name').value;
+    const itemName = normalizeItemName(rawItemName);
     const qty = parseInt(document.getElementById('b-qty').value) || 0;
     const action = document.getElementById('b-action').value;
     const notes = document.getElementById('b-notes').value || '-';
@@ -339,8 +368,10 @@ window.saveBrangkas = async function(e) {
     if (type === 'item') {
         if (!itemName) return alert('Masukkan nama item!');
         if (!window.brangkasState.items) window.brangkasState.items = {};
-        
-        let current = window.brangkasState.items[itemName] || 0;
+
+        // Satukan data lama seperti "vest" dan "VEST" sebelum stok diperbarui.
+        normalizeBrangkasItems();
+        let current = Number(window.brangkasState.items[itemName]) || 0;
         if (action === 'add') window.brangkasState.items[itemName] = current + qty;
         else if (action === 'sub') window.brangkasState.items[itemName] = Math.max(0, current - qty);
         else if (action === 'set') window.brangkasState.items[itemName] = qty;
