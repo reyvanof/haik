@@ -128,7 +128,7 @@ window.closeModal = function(modalId) {
     document.getElementById(modalId).classList.remove('active');
 };
 
-// RENDER FUNCTIONS - TERBARU
+// RENDER FUNCTIONS
 window.renderBrangkas = function() {
     const wEl = document.getElementById('stat-white-money');
     if (wEl) wEl.innerText = formatRP(window.brangkasState.whiteMoney);
@@ -164,6 +164,7 @@ window.renderBrangkas = function() {
     if (countEl) countEl.innerText = totalItems + ' PCS';
 };
 
+// FUNGSI HAPUS ITEM
 window.deleteBrangkasItem = async function(itemName) {
     console.log("Mencoba menghapus item:", itemName);
     
