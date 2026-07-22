@@ -128,7 +128,7 @@ window.closeModal = function(modalId) {
     document.getElementById(modalId).classList.remove('active');
 };
 
-// RENDER FUNCTIONS
+// RENDER FUNCTIONS - TERBARU
 window.renderBrangkas = function() {
     const wEl = document.getElementById('stat-white-money');
     if (wEl) wEl.innerText = formatRP(window.brangkasState.whiteMoney);
@@ -164,7 +164,6 @@ window.renderBrangkas = function() {
     if (countEl) countEl.innerText = totalItems + ' PCS';
 };
 
-// FUNGSI HAPUS ITEM
 window.deleteBrangkasItem = async function(itemName) {
     console.log("Mencoba menghapus item:", itemName);
     
@@ -570,7 +569,7 @@ async function saveDataToCloud() {
             kelompokToBmcData: window.kelompokToBmcData,
             transactionsData: window.transactionsData,
             lastUpdated: new Date().toISOString()
-        }, { merge: true });
+        });
         console.log("✅ Update data ke Firestore BERHASIL.");
     } catch (error) {
         console.error("❌ Gagal simpan ke Firestore:", error);
