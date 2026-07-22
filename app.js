@@ -143,12 +143,11 @@ window.renderBrangkas = function() {
         tbody.innerHTML = '';
         for (let [itemName, qty] of Object.entries(window.brangkasState.items || {})) {
             totalItems += qty;
-            // Diubah ke data-name untuk perbaikan klik
             tbody.innerHTML += `
                 <tr>
                     <td style="font-weight:600;">${itemName}</td>
                     <td><span class="badge badge-green">${qty} PCS</span></td>
-                    <td><button class="btn btn-sm btn-red btn-delete-item" type="button" data-name="${itemName}">Hapus</button></td>
+                    <td><button class="btn btn-sm btn-red" type="button" onclick="event.preventDefault(); window.deleteBrangkasItem('${itemName}')">Hapus</button></td>
                 </tr>
             `;
         }
@@ -156,15 +155,6 @@ window.renderBrangkas = function() {
     const countEl = document.getElementById('stat-item-count');
     if (countEl) countEl.innerText = totalItems + ' PCS';
 };
-
-// Tambahan Event Listener untuk memperbaiki masalah hapus
-document.addEventListener('click', function(e) {
-    const btn = e.target.closest('.btn-delete-item');
-    if (btn) {
-        const itemName = btn.getAttribute('data-name');
-        window.deleteBrangkasItem(itemName);
-    }
-});
 
 window.renderMemberCatalog = function(filterText = '') {
     const tbody = document.getElementById('tbody-member-catalog');
@@ -353,11 +343,21 @@ window.saveBrangkas = async function(e) {
     alert('✅ Brangkas Berhasil Diperbarui!');
 };
 
+// --- FUNGSI UPDATE ---
 window.deleteBrangkasItem = async function(itemName) {
-    if (confirm(`Hapus ${itemName} dari brangkas?`)) {
-        delete window.brangkasState.items[itemName];
+    if (confirm(`Apakah kamu yakin ingin menghapus '${itemName}' dari daftar?`)) {
+        // Hapus item dari objek items
+        if (window.brangkasState.items.hasOwnProperty(itemName)) {
+            delete window.brangkasState.items[itemName];
+        }
+        
+        // Simpan ke database
         await window.saveData();
+        
+        // Re-render semua tabel
         renderAll();
+        
+        alert('Berhasil dihapus!');
     }
 };
 
