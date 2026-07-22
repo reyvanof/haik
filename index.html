@@ -116,6 +116,32 @@
             background: rgba(229, 169, 60, 0.08);
         }
 
+        /* Sub Tabs inside Transaction Panel */
+        .sub-nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+
+        .sub-tab-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-family: 'Rajdhani', sans-serif;
+        }
+
+        .sub-tab-btn.active-sub {
+            background: var(--accent-gold);
+            color: #000;
+            border-color: var(--accent-gold);
+        }
+
         /* Class untuk menyembunyikan panel admin dari member */
         .admin-only {
             display: none !important;
@@ -224,6 +250,7 @@
         .stat-card.red::before { background: var(--accent-red); }
         .stat-card.gold::before { background: var(--accent-gold); }
         .stat-card.purple::before { background: var(--accent-purple); }
+        .stat-card.blue::before { background: var(--accent-blue); }
 
         .stat-val {
             font-size: 1.6rem;
@@ -509,7 +536,7 @@
 
         <!-- TAB KHUSUS ADMIN 1: DASHBOARD & REKAP BRANGKAS -->
         <div id="dashboard" class="tab-content">
-            <div class="grid-4" style="margin-bottom: 1.5rem;">
+            <div class="grid-4" style="margin-bottom: 1rem;">
                 <div class="stat-card green">
                     <span class="stat-label">Total Uang Putih (Brangkas)</span>
                     <span class="stat-val" id="stat-white-money">Rp0</span>
@@ -525,6 +552,22 @@
                 <div class="stat-card gold">
                     <span class="stat-label">Total Item Tersimpan</span>
                     <span class="stat-val" id="stat-item-count">0 PCS</span>
+                </div>
+            </div>
+
+            <!-- PANEL RINGKASAN PROFIT / LOSS -->
+            <div class="grid-3" style="margin-bottom: 1.5rem;">
+                <div class="stat-card blue">
+                    <span class="stat-label">📈 TOTAL PEMASUKAN</span>
+                    <span class="stat-val" id="stat-total-in" style="color:var(--accent-green)">Rp 0</span>
+                </div>
+                <div class="stat-card red">
+                    <span class="stat-label">📉 TOTAL PENGELUARAN</span>
+                    <span class="stat-val" id="stat-total-out" style="color:var(--accent-red)">Rp 0</span>
+                </div>
+                <div class="stat-card gold">
+                    <span class="stat-label">⚖️ NET PROFIT / LOSS (LABA/RUGI)</span>
+                    <span class="stat-val" id="stat-net-profit">Rp 0</span>
                 </div>
             </div>
 
@@ -649,30 +692,62 @@
             </div>
         </div>
 
-        <!-- TAB KHUSUS ADMIN 4: RIWAYAT TRANSAKSI -->
+        <!-- TAB KHUSUS ADMIN 4: RIWAYAT TRANSAKSI (PEMASUKAN & PENGELUARAN TERPISAH) -->
         <div id="transactions" class="tab-content">
             <div class="card">
                 <div class="card-header">
-                    <span class="card-title">💰 Riwayat Pengeluaran & Pemasukan (Sistem & Kas)</span>
+                    <span class="card-title">💰 Panel Riwayat Transaksi</span>
                     <button class="btn btn-sm btn-red" onclick="clearTransactions()">Hapus Semua Riwayat</button>
                 </div>
-                <div class="table-responsive">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Waktu / Tanggal</th>
-                                <th>Tipe Transaksi</th>
-                                <th>Deskripsi Kas / Item</th>
-                                <th>QTY</th>
-                                <th>Nominal Payment</th>
-                                <th>Jenis Kas</th>
-                                <th>Keterangan / Notes</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-transactions">
-                            <!-- Dynamic -->
-                        </tbody>
-                    </table>
+
+                <!-- SUB TAB DIPISAH DUA PANEL -->
+                <div class="sub-nav-tabs">
+                    <button class="sub-tab-btn active-sub" id="btn-sub-in" onclick="switchSubTab('tx-in')">📥 Transaksi Masuk (Pemasukan)</button>
+                    <button class="sub-tab-btn" id="btn-sub-out" onclick="switchSubTab('tx-out')">📤 Transaksi Keluar (Pengeluaran)</button>
+                </div>
+
+                <!-- PANEL PEMASUKAN -->
+                <div id="tx-in" class="sub-tab-content">
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Waktu / Tanggal</th>
+                                    <th>Tipe Transaksi</th>
+                                    <th>Deskripsi Kas / Item</th>
+                                    <th>QTY</th>
+                                    <th>Nominal Payment</th>
+                                    <th>Jenis Kas</th>
+                                    <th>Keterangan / Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-transactions-in">
+                                <!-- Dynamic -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- PANEL PENGELUARAN -->
+                <div id="tx-out" class="sub-tab-content" style="display: none;">
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Waktu / Tanggal</th>
+                                    <th>Tipe Transaksi</th>
+                                    <th>Deskripsi Kas / Item</th>
+                                    <th>QTY</th>
+                                    <th>Nominal Payment</th>
+                                    <th>Jenis Kas</th>
+                                    <th>Keterangan / Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-transactions-out">
+                                <!-- Dynamic -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1007,12 +1082,32 @@
             if (activeTab) activeTab.classList.add('active');
         }
 
+        function switchSubTab(subTabId) {
+            document.querySelectorAll('.sub-tab-btn').forEach(btn => btn.classList.remove('active-sub'));
+            document.querySelectorAll('.sub-tab-content').forEach(c => c.style.display = 'none');
+
+            if(subTabId === 'tx-in') {
+                document.getElementById('btn-sub-in').classList.add('active-sub');
+                document.getElementById('tx-in').style.display = 'block';
+            } else {
+                document.getElementById('btn-sub-out').classList.add('active-sub');
+                document.getElementById('tx-out').style.display = 'block';
+            }
+        }
+
         // FORMAT CURRENCY
         function formatRP(num) {
             return 'Rp ' + (num || 0).toLocaleString('id-ID');
         }
         function formatUSD(num) {
             return '$ ' + (num || 0).toLocaleString('en-US');
+        }
+
+        // HELPER NUMERIC PARSER FROM FORMATTED CURRENCY
+        function parseVal(str) {
+            if(!str) return 0;
+            let cleaned = str.replace(/[^0-9]/g, '');
+            return parseFloat(cleaned) || 0;
         }
 
         // BRANGKAS RENDER & LOGIC
@@ -1039,6 +1134,31 @@
             }
 
             document.getElementById('stat-item-count').innerText = totalItems + ' PCS';
+            calcProfitLoss();
+        }
+
+        function calcProfitLoss() {
+            let totalIn = 0;
+            let totalOut = 0;
+
+            transactionsData.forEach(tx => {
+                let val = parseVal(tx.total);
+                if(tx.type === 'PEMASUKAN') totalIn += val;
+                else if(tx.type === 'PENGELUARAN') totalOut += val;
+            });
+
+            let netProfit = totalIn - totalOut;
+            document.getElementById('stat-total-in').innerText = formatRP(totalIn);
+            document.getElementById('stat-total-out').innerText = formatRP(totalOut);
+
+            const netElem = document.getElementById('stat-net-profit');
+            if(netProfit >= 0) {
+                netElem.innerText = '+ ' + formatRP(netProfit);
+                netElem.style.color = 'var(--accent-green)';
+            } else {
+                netElem.innerText = '- ' + formatRP(Math.abs(netProfit));
+                netElem.style.color = 'var(--accent-red)';
+            }
         }
 
         function toggleBrangkasType() {
@@ -1267,7 +1387,6 @@
 
                 summaryItems.push(`${item.name} (${item.qty} PCS)`);
 
-                // Potong Stok Barang di Brangkas jika item tersebut terdaftar
                 const cleanName = item.name.toUpperCase();
                 if (brangkasState.items[cleanName]) {
                     brangkasState.items[cleanName] = Math.max(0, brangkasState.items[cleanName] - item.qty);
@@ -1275,14 +1394,12 @@
                 }
             });
 
-            // Tambahkan Nominal Kas ke Brangkas
             if (payType === 'UP') {
                 brangkasState.whiteMoney += grandTotal;
             } else {
                 brangkasState.blackMoney += grandTotal;
             }
 
-            // Catat Ke Riwayat Transaksi (Pemasukan)
             const now = new Date().toLocaleString('id-ID');
             transactionsData.unshift({
                 time: now,
@@ -1430,14 +1547,16 @@
             alert('Transaksi berhasil dicatat & brangkas telah diupdate!');
         }
 
-        // RENDER TRANSACTIONS
+        // RENDER TRANSACTIONS (SEPARATED INTO TWO TABLES)
         function renderTransactions() {
-            const tbody = document.getElementById('tbody-transactions');
-            tbody.innerHTML = '';
+            const tbodyIn = document.getElementById('tbody-transactions-in');
+            const tbodyOut = document.getElementById('tbody-transactions-out');
+            tbodyIn.innerHTML = '';
+            tbodyOut.innerHTML = '';
 
             transactionsData.forEach(tx => {
                 const isIncome = tx.type === 'PEMASUKAN';
-                tbody.innerHTML += `
+                const rowHTML = `
                     <tr>
                         <td style="color:var(--text-muted); font-size:0.85rem;">${tx.time}</td>
                         <td><span class="badge ${isIncome ? 'badge-green' : 'badge-red'}">${tx.type}</span></td>
@@ -1448,7 +1567,12 @@
                         <td style="color:var(--text-muted); font-size:0.85rem;">${tx.notes}</td>
                     </tr>
                 `;
+
+                if(isIncome) tbodyIn.innerHTML += rowHTML;
+                else tbodyOut.innerHTML += rowHTML;
             });
+
+            calcProfitLoss();
         }
 
         function clearTransactions() {
