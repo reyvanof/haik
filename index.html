@@ -393,13 +393,13 @@
         <h1>⚡ REKAPAN BRANGKAS BMC</h1>
         
         <div class="header-logo">
-            <img src="https://via.placeholder.com/150x60/181b26/e5a93c?text=BMC+LOGO" alt="Logo BMC">
+            <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='150' height='60' viewBox='0 0 150 60'><rect width='100%' height='100%' fill='%23181b26'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%23e5a93c' font-family='sans-serif' font-weight='bold' font-size='18'>BMC LOGO</text></svg>" alt="Logo BMC">
         </div>
 
         <div class="header-status">
             <div id="status-koneksi">Connecting...</div>
             <label for="user-role" style="font-size:0.85rem; color:var(--accent-gold); font-weight:600; margin-right:5px;">Akses Peran:</label>
-            <select id="user-role" class="form-control" style="width: 170px;" onchange="handleRoleChange()">
+            <select id="user-role" class="form-control" style="width: 170px;">
                 <option value="member">👤 Pembeli / Member</option>
                 <option value="admin">🔑 Pengurus / Admin</option>
             </select>
@@ -415,7 +415,7 @@
     </div>
 
     <main>
-        <!-- TAB UNTUK MEMBER: KATALOG JUAL KE ANGGOTA (20+) DENGAN KERANJANG -->
+        <!-- TAB UNTUK MEMBER -->
         <div id="member-catalog" class="tab-content active">
             <div class="grid-3">
                 <div class="card">
@@ -443,11 +443,11 @@
                     </div>
                 </div>
 
-                <!-- PANEL KERANJANG BELANJA KELOMPOK/ANGGOTA -->
+                <!-- PANEL KERANJANG -->
                 <div class="card">
                     <div class="card-header">
                         <span class="card-title">🛒 Keranjang Order</span>
-                        <button class="btn btn-sm btn-red" onclick="clearCart()">Kosongkan</button>
+                        <button class="btn btn-sm btn-red" type="button" onclick="clearCart()">Kosongkan</button>
                     </div>
 
                     <div class="cart-box">
@@ -490,13 +490,13 @@
                             </div>
                         </div>
 
-                        <button class="btn btn-green" style="width: 100%;" onclick="checkoutMemberCart()">⚡ Proses Order (Tertotal)</button>
+                        <button class="btn btn-green" type="button" style="width: 100%;" onclick="checkoutMemberCart()">⚡ Proses Order (Tertotal)</button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- TAB KHUSUS ADMIN 1: DASHBOARD & REKAP BRANGKAS -->
+        <!-- TAB ADMIN 1: DASHBOARD & REKAP BRANGKAS -->
         <div id="dashboard" class="tab-content">
             <div class="grid-4" style="margin-bottom: 1.5rem;">
                 <div class="stat-card green">
@@ -520,40 +520,13 @@
             <div class="grid-2">
                 <div class="card">
                     <div class="card-header">
-                        <span class="card-title">💼 Input / Tarik Kas Uang & Barang</span>
+                        <span class="card-title">💼 Quick Input Kas & Barang</span>
                     </div>
-                    <form id="form-brangkas" onsubmit="saveBrangkas(event)">
-                        <div class="form-group">
-                            <label>Jenis Kas / Item</label>
-                            <select id="b-type" class="form-control" onchange="toggleBrangkasType()">
-                                <option value="white">Uang Putih (Rp)</option>
-                                <option value="black">Black Money ($)</option>
-                                <option value="red">Red Money ($)</option>
-                                <option value="item">Barang / Item Senjata / Bahan</option>
-                            </select>
-                        </div>
-                        <div class="form-group" id="group-b-item-name" style="display:none;">
-                            <label>Nama Item / Barang</label>
-                            <input type="text" id="b-item-name" class="form-control" placeholder="Contoh: Vest, Ceramic, Plat Besi, 9mm">
-                        </div>
-                        <div class="form-group">
-                            <label id="lbl-b-qty">Jumlah / Nominal</label>
-                            <input type="number" id="b-qty" class="form-control" placeholder="Masukkan angka" required min="0">
-                        </div>
-                        <div class="form-group">
-                            <label>Aksi Transaksi</label>
-                            <select id="b-action" class="form-control">
-                                <option value="add">Deposit / Tambah Kas (+)</option>
-                                <option value="sub">Tarik Kas / Pakai (-)</option>
-                                <option value="set">Set Ulang Total (=)</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Catatan / Alasan (Wajib Diisi untuk Riwayat)</label>
-                            <input type="text" id="b-notes" class="form-control" placeholder="Contoh: Beli Bahan, Pembagian Gaji, Modal Patroli">
-                        </div>
-                        <button type="submit" class="btn btn-green" style="width: 100%;">Proses & Catat Riwayat</button>
-                    </form>
+                    <div style="display:flex; flex-direction:column; gap:10px;">
+                        <button type="button" class="btn btn-green" onclick="window.submitDashboardMoney(event, 'PEMASUKAN')">+ Setor Uang Kas (UP / BM / RM)</button>
+                        <button type="button" class="btn btn-red" onclick="window.submitDashboardMoney(event, 'PENGELUARAN')">- Tarik Uang Kas (UP / BM / RM)</button>
+                        <button type="button" class="btn btn-blue" onclick="window.submitBrangkasItem(event)">📦 Tambah Item Ke Brangkas</button>
+                    </div>
                 </div>
 
                 <div class="card">
@@ -576,12 +549,11 @@
             </div>
         </div>
 
-        <!-- TAB KHUSUS ADMIN 2: ORDERAN BMC -> KELOMPOK -->
+        <!-- TAB ADMIN 2: ORDERAN BMC -> KELOMPOK -->
         <div id="bmc-to-kelompok" class="tab-content">
             <div class="card">
                 <div class="card-header">
                     <span class="card-title">📦 Panel Orderan: BMC ➔ Kelompok</span>
-                    <button class="btn btn-sm btn-gold" onclick="openCustomOrderModal('BMC -> Kelompok')">+ Tambah Order Custom</button>
                 </div>
                 <div class="table-responsive">
                     <table>
@@ -591,10 +563,10 @@
                                 <th>Kategori</th>
                                 <th>Nama Barang</th>
                                 <th>QTY Max/Order</th>
-                                <th>Harga (Without Jasa)</th>
-                                <th>Harga (With Jasa)</th>
-                                <th>Special Note</th>
-                                <th>Keterangan</th>
+                                <th>Harga (WO Jasa)</th>
+                                <th>Harga (W Jasa)</th>
+                                <th>Note</th>
+                                <th>Ket</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -604,12 +576,11 @@
             </div>
         </div>
 
-        <!-- TAB KHUSUS ADMIN 3: ORDERAN KELOMPOK -> BMC -->
+        <!-- TAB ADMIN 3: ORDERAN KELOMPOK -> BMC -->
         <div id="kelompok-to-bmc" class="tab-content">
             <div class="card">
                 <div class="card-header">
                     <span class="card-title">📥 Panel Orderan: Kelompok ➔ BMC</span>
-                    <button class="btn btn-sm btn-gold" onclick="openCustomOrderModal('Kelompok -> BMC')">+ Tambah Order Custom</button>
                 </div>
                 <div class="table-responsive">
                     <table>
@@ -619,10 +590,10 @@
                                 <th>Kategori</th>
                                 <th>Nama Barang</th>
                                 <th>QTY Max/Order</th>
-                                <th>Harga (Without Jasa)</th>
-                                <th>Harga (With Jasa)</th>
-                                <th>Special Note</th>
-                                <th>Keterangan</th>
+                                <th>Harga (WO Jasa)</th>
+                                <th>Harga (W Jasa)</th>
+                                <th>Note</th>
+                                <th>Ket</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
@@ -632,24 +603,23 @@
             </div>
         </div>
 
-        <!-- TAB KHUSUS ADMIN 4: RIWAYAT TRANSAKSI -->
+        <!-- TAB ADMIN 4: RIWAYAT TRANSAKSI -->
         <div id="transactions" class="tab-content">
             <div class="card">
                 <div class="card-header">
-                    <span class="card-title">💰 Riwayat Pengeluaran & Pemasukan (Sistem & Kas)</span>
-                    <button class="btn btn-sm btn-red" onclick="clearTransactions()">Hapus Semua Riwayat</button>
+                    <span class="card-title">💰 Riwayat Transaksi</span>
                 </div>
                 <div class="table-responsive">
                     <table>
                         <thead>
                             <tr>
-                                <th>Waktu / Tanggal</th>
-                                <th>Tipe Transaksi</th>
-                                <th>Deskripsi Kas / Item</th>
+                                <th>Waktu</th>
+                                <th>Tipe</th>
+                                <th>Item / Kas</th>
                                 <th>QTY</th>
-                                <th>Nominal Payment</th>
+                                <th>Total</th>
                                 <th>Jenis Kas</th>
-                                <th>Keterangan / Notes</th>
+                                <th>Catatan</th>
                             </tr>
                         </thead>
                         <tbody id="tbody-transactions"></tbody>
@@ -663,7 +633,7 @@
     <div id="modal-pin" class="modal">
         <div class="modal-content" style="max-width: 380px; text-align: center;">
             <h3 style="color:var(--accent-gold); margin-bottom:0.5rem; font-family:'Rajdhani';">🔒 VERIFIKASI PENGURUS</h3>
-            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.2rem;">Masukkan PIN Admin untuk mengakses Dashboard, Orderan Kelompok & Transaksi.</p>
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.2rem;">Masukkan PIN Admin untuk mengakses Dashboard & Transaksi.</p>
             
             <div class="form-group">
                 <input type="password" id="input-pin-admin" class="form-control" placeholder="PIN ADMIN" style="text-align: center; font-size: 1.5rem; letter-spacing: 5px;">
@@ -676,99 +646,50 @@
         </div>
     </div>
 
-    <!-- MODAL SELL SINGLE / ORDER ITEM -->
-    <div id="modal-sell" class="modal">
-        <div class="modal-content">
-            <h3 style="color:var(--accent-gold); margin-bottom:1rem; font-family:'Rajdhani';" id="modal-sell-title">Order Item</h3>
-            <form id="form-sell" onsubmit="processTransaction(event)">
-                <input type="hidden" id="modal-item-name">
-                <input type="hidden" id="modal-price-bm">
-                <input type="hidden" id="modal-price-up">
-                <input type="hidden" id="modal-order-type">
-
-                <div class="form-group">
-                    <label>Nama Barang</label>
-                    <input type="text" id="modal-display-name" class="form-control" readonly>
-                </div>
-
-                <div class="form-group">
-                    <label>Jumlah (Quantity)</label>
-                    <input type="number" id="modal-qty" class="form-control" value="1" min="1" required oninput="calcModalTotal()" onchange="calcModalTotal()">
-                </div>
-
-                <div class="form-group">
-                    <label>Metode Pembayaran / Tipe Transaksi</label>
-                    <select id="modal-pay-type" class="form-control" onchange="calcModalTotal()">
-                        <option value="UP">Uang Putih (Rp)</option>
-                        <option value="BM">Black Money ($)</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Harga Satuan</label>
-                    <input type="text" id="modal-unit-price" class="form-control" readonly>
-                </div>
-
-                <div class="form-group">
-                    <label>Total Yang Harus Dibayar</label>
-                    <input type="text" id="modal-total-price" class="form-control" style="font-weight:bold; color:var(--accent-green);" readonly>
-                </div>
-
-                <div class="form-group">
-                    <label>Catatan Tambahan / Buyer</label>
-                    <input type="text" id="modal-notes" class="form-control" placeholder="Contoh: Pembeli Anggota X / Kelompok Y">
-                </div>
-
-                <div style="display:flex; gap:10px; margin-top:1.5rem;">
-                    <button type="submit" class="btn btn-green" style="flex:1;">Konfirmasi Transaksi</button>
-                    <button type="button" class="btn btn-red" onclick="closeModal('modal-sell')">Batal</button>
-                </div>
-            </form>
+    <!-- MODAL TRANSAKSI ORDER PANEL -->
+    <div id="modal-order-panel" class="modal">
+      <div class="modal-content">
+        <h3 id="m-order-title" style="color:var(--accent-gold); margin-top:0; font-size:1.2rem; margin-bottom:16px;">Transaksi Item</h3>
+        
+        <div class="form-group">
+          <label>Nama Barang</label>
+          <input type="text" id="m-order-item" readonly class="form-control">
         </div>
-    </div>
 
-    <!-- MODAL CUSTOM ORDER -->
-    <div id="modal-custom-order" class="modal">
-        <div class="modal-content">
-            <h3 style="color:var(--accent-gold); margin-bottom:1rem; font-family:'Rajdhani';" id="modal-custom-title">Input Custom Order</h3>
-            <form id="form-custom-order" onsubmit="saveCustomOrder(event)">
-                <input type="hidden" id="custom-target-panel">
-
-                <div class="form-group">
-                    <label>Nama Kelompok</label>
-                    <input type="text" id="c-group" class="form-control" required placeholder="Contoh: HAKUSHIKAI, SHINIGAMI">
-                </div>
-                <div class="form-group">
-                    <label>Kategori</label>
-                    <input type="text" id="c-category" class="form-control" placeholder="Contoh: SENJATA, VEST, PELURU">
-                </div>
-                <div class="form-group">
-                    <label>Nama Barang</label>
-                    <input type="text" id="c-item" class="form-control" required placeholder="Nama item / barang">
-                </div>
-                <div class="form-group">
-                    <label>QTY / Kapasitas</label>
-                    <input type="text" id="c-qty" class="form-control" placeholder="Contoh: 30 PCS / UNLIMITED">
-                </div>
-                <div class="form-group">
-                    <label>Harga Without Jasa (Rp)</label>
-                    <input type="number" id="c-price-wo" class="form-control" placeholder="0">
-                </div>
-                <div class="form-group">
-                    <label>Harga With Jasa (Rp)</label>
-                    <input type="number" id="c-price-w" class="form-control" placeholder="0">
-                </div>
-                <div class="form-group">
-                    <label>Special Note / Keterangan</label>
-                    <input type="text" id="c-note" class="form-control" placeholder="Contoh: Barter Plat Besi / 1:1">
-                </div>
-
-                <div style="display:flex; gap:10px; margin-top:1.5rem;">
-                    <button type="submit" class="btn btn-green" style="flex:1;">Simpan Order</button>
-                    <button type="button" class="btn btn-red" onclick="closeModal('modal-custom-order')">Batal</button>
-                </div>
-            </form>
+        <div class="form-group">
+          <label>Jumlah (Quantity)</label>
+          <input type="number" id="m-order-qty" value="1" min="1" class="form-control" oninput="window.calcOrderModalTotal()">
         </div>
+
+        <div class="form-group">
+          <label>Metode Pembayaran / Tipe Transaksi</label>
+          <select id="m-order-paytype" class="form-control" onchange="window.calcOrderModalTotal()">
+            <option value="UP">Uang Putih (Rp)</option>
+            <option value="BM">Black Money ($)</option>
+            <option value="RM">Red Money ($)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Harga Satuan</label>
+          <input type="text" id="m-order-unitprice" readonly class="form-control">
+        </div>
+
+        <div class="form-group">
+          <label>Total Yang Harus Dibayar</label>
+          <input type="text" id="m-order-total" readonly class="form-control" style="color:var(--accent-green); font-weight:bold;">
+        </div>
+
+        <div class="form-group">
+          <label>Catatan Tambahan / Buyer</label>
+          <input type="text" id="m-order-notes" class="form-control" placeholder="Contoh: Pembeli Anggota X / Kelompok Y">
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:15px;">
+          <button type="button" class="btn btn-green" style="flex:1;" onclick="window.confirmOrderModal()">KONFIRMASI TRANSAKSI</button>
+          <button type="button" class="btn btn-red" onclick="window.closeOrderModal()">BATAL</button>
+        </div>
+      </div>
     </div>
 
     <!-- LOAD SCRIPT LOGIKA / BACKEND -->
