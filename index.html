@@ -771,68 +771,7 @@
         </div>
     </div>
 
-    <!-- SCRIPT LOGIKA INTEGRASI -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        
-        // Inisialisasi Firebase (Ganti config sesuai milikmu jika perlu)
-        const firebaseConfig = {
-            apiKey: "AIzaSyBO9R9D54dCZYtJynKXtw6KtdYccOw68Fs",
-            authDomain: "bmcc-704a0.firebaseapp.com",
-            projectId: "bmcc-704a0",
-            storageBucket: "bmcc-704a0.firebasestorage.app",
-            appId: "1:141806053766:web:02e8ee4184619f8d77a407"
-        };
-        const app = initializeApp(firebaseConfig);
-
-        // Fungsi Global Agar Bisa Diakses dari HTML
-        window.switchTab = (tabId) => {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            event.currentTarget.classList.add('active');
-        };
-
-        window.handleRoleChange = () => {
-            const role = document.getElementById('user-role').value;
-            if (role === 'admin') {
-                document.getElementById('modal-pin').classList.add('active');
-            } else {
-                document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
-                window.switchTab('member-catalog');
-            }
-        };
-
-        window.submitAdminPin = () => {
-            const pin = document.getElementById('input-pin-admin').value;
-            if (pin === "123") { // Ganti pin di sini
-                document.getElementById('modal-pin').classList.remove('active');
-                document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'inline-block');
-                alert("Akses Admin Berhasil!");
-            } else {
-                alert("PIN SALAH!");
-            }
-        };
-
-        window.cancelAdminAuth = () => {
-            document.getElementById('modal-pin').classList.remove('active');
-            document.getElementById('user-role').value = 'member';
-        };
-
-        window.closeModal = (id) => document.getElementById(id).classList.remove('active');
-        
-        window.openCustomOrderModal = (title) => {
-            document.getElementById('modal-custom-order').classList.add('active');
-            document.getElementById('modal-custom-title').innerText = "Input " + title;
-        };
-
-        window.toggleBrangkasType = () => {
-            const val = document.getElementById('b-type').value;
-            document.getElementById('group-b-item-name').style.display = (val === 'item') ? 'block' : 'none';
-        };
-
-        document.getElementById('status-koneksi').innerText = "Connected";
-        document.getElementById('status-koneksi').style.backgroundColor = "#10b981";
-    </script>
+    <!-- LOAD MODULE SCRIPT -->
+    <script type="module" src="app.js"></script>
 </body>
 </html>
