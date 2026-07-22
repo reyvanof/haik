@@ -195,12 +195,144 @@ window.renderTransactions = function() {
     });
 };
 
+// FITUR KERANJANG BELANJA (MEMBER CATALOG)
+window.addToCart = function(name, priceBM, priceUP) {
+    const inputQty = prompt(`Masukkan jumlah ${name} yang ingin dibeli:`, "1");
+    if (!inputQty) return;
+    const qty = parseInt(inputQty);
+    if (isNaN(qty) || qty <= 0) return alert("Jumlah barang harus angka positif!");
+
+    const payTypeChoice = prompt(`Pilih Jenis Pembayaran:\n1. Black Money (BM)\n2. Uang Putih (UP)`, "1");
+    let payType = 'BM';
+    let unitPrice = priceBM;
+
+    if (payTypeChoice === '2') {
+        payType = 'UP';
+        unitPrice = priceUP;
+    } else if (payTypeChoice !== '1') {
+        return alert("Pilihan pembayaran tidak valid!");
+    }
+
+    const grandTotal = unitPrice * qty;
+    window.cartItems.push({
+        name,
+        qty,
+        payType,
+        unitPrice,
+        grandTotal
+    });
+
+    window.renderCart();
+    alert(`✅ ${name} (${qty} PCS) berhasil ditambahkan ke keranjang!`);
+};
+
+window.renderCart = function() {
+    const tbody = document.getElementById('tbody-cart');
+    const totalEl = document.getElementById('cart-grand-total');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+    let totalBM = 0;
+    let totalUP = 0;
+
+    window.cartItems.forEach((item, index) => {
+        if (item.payType === 'BM') totalBM += item.grandTotal;
+        if (item.payType === 'UP') totalUP += item.grandTotal;
+
+        const formattedPrice = item.payType === 'BM' ? formatUSD(item.grandTotal) : formatRP(item.grandTotal);
+
+        tbody.innerHTML += `
+            <tr>
+                <td style="font-weight: 600;">${item.name}</td>
+                <td>${item.qty} PCS</td>
+                <td><span class="badge badge-black">${item.payType}</span></td>
+                <td style="font-weight: bold; color: var(--accent-green);">${formattedPrice}</td>
+                <td>
+                    <button class="btn btn-sm btn-red" type="button" onclick="window.removeFromCart(${index})">Hapus</button>
+                </td>
+            </tr>
+        `;
+    });
+
+    if (totalEl) {
+        totalEl.innerText = `Total: ${formatUSD(totalBM)} | ${formatRP(totalUP)}`;
+    }
+};
+
+window.removeFromCart = function(index) {
+    window.cartItems.splice(index, 1);
+    window.renderCart();
+};
+
+window.checkoutCart = async function() {
+    if (window.cartItems.length === 0) return alert("Keranjang belanjaan masih kosong!");
+
+    const buyerName = prompt("Masukkan Nama Pembeli / Member:", "Member BMC");
+    if (!buyerName) return;
+
+    window.cartItems.forEach(item => {
+        const formattedTotal = item.payType === 'BM' ? formatUSD(item.grandTotal) : formatRP(item.grandTotal);
+        const labelPay = item.payType === 'BM' ? 'Black Money' : 'Uang Putih';
+
+        // Pemasukan ke Kas
+        if (item.payType === 'BM') window.brangkasState.blackMoney += item.grandTotal;
+        if (item.payType === 'UP') window.brangkasState.whiteMoney += item.grandTotal;
+
+        // Pengurangan stok brangkas jika barang tersedia
+        if (window.brangkasState.items && window.brangkasState.items[item.name]) {
+            window.brangkasState.items[item.name] = Math.max(0, window.brangkasState.items[item.name] - item.qty);
+        }
+
+        // Simpan ke Riwayat Transaksi
+        window.transactionsData.unshift({
+            time: new Date().toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' }),
+            type: 'PEMASUKAN',
+            item: `KATALOG: ${item.name}`,
+            qty: item.qty,
+            total: formattedTotal,
+            payType: labelPay,
+            notes: `Pembeli: ${buyerName}`
+        });
+    });
+
+    window.cartItems = [];
+    await window.saveData();
+    renderAll();
+    window.renderCart();
+    alert('✅ Checkout Berhasil dan Saldo Telah Diperbarui!');
+};
+
+// MANAJEMEN BRANGKAS (HAPUS BARANG)
+window.deleteBrangkasItem = async function(itemName) {
+    if (!window.brangkasState.items || !(itemName in window.brangkasState.items)) return;
+    
+    if (confirm(`Apakah Anda yakin ingin menghapus "${itemName}" dari Brangkas?`)) {
+        delete window.brangkasState.items[itemName];
+        await window.saveData();
+        renderAll();
+        alert(`✅ Barang ${itemName} telah dihapus dari Brangkas.`);
+    }
+};
+
+// MANAJEMEN ADMIN PIN
+window.loginAdmin = function() {
+    const inputPin = prompt("Masukkan PIN Admin:");
+    if (inputPin === window.ADMIN_PIN) {
+        window.isAdminLoggedIn = true;
+        alert("✅ Login Admin Berhasil!");
+        renderAll();
+    } else {
+        alert("❌ PIN Salah!");
+    }
+};
+
 function renderAll() {
     window.renderBrangkas();
     window.renderMemberCatalog();
     window.renderBmcToKelompok();
     window.renderKelompokToBmc();
     window.renderTransactions();
+    window.renderCart();
 }
 
 // SYNC FIREBASE
@@ -244,41 +376,62 @@ window.openOrderModal = function(type, index) {
 
     window.currentActiveOrder = { ...itemData, orderType: type };
 
-    document.getElementById('m-order-title').innerText = `Transaksi Item: ${itemData.item} dari ${itemData.group}`;
-    document.getElementById('m-order-item').value = `${itemData.item} dari ${itemData.group}`;
-    document.getElementById('m-order-qty').value = 1;
-    document.getElementById('m-order-paytype').value = 'UP';
-    document.getElementById('m-order-notes').value = '';
+    const titleEl = document.getElementById('m-order-title');
+    if (titleEl) titleEl.innerText = `Transaksi Item: ${itemData.item} dari ${itemData.group}`;
+    
+    const itemEl = document.getElementById('m-order-item');
+    if (itemEl) itemEl.value = `${itemData.item} dari ${itemData.group}`;
+    
+    const qtyEl = document.getElementById('m-order-qty');
+    if (qtyEl) qtyEl.value = 1;
+    
+    const payEl = document.getElementById('m-order-paytype');
+    if (payEl) payEl.value = 'UP';
+    
+    const notesEl = document.getElementById('m-order-notes');
+    if (notesEl) notesEl.value = '';
 
     window.calcOrderModalTotal();
-    document.getElementById('modal-order-panel').style.display = 'flex';
+    const modalEl = document.getElementById('modal-order-panel');
+    if (modalEl) modalEl.style.display = 'flex';
 };
 
 window.calcOrderModalTotal = function() {
     if (!window.currentActiveOrder) return;
-    const qty = parseInt(document.getElementById('m-order-qty').value) || 1;
-    const payType = document.getElementById('m-order-paytype').value;
+    const qtyInput = document.getElementById('m-order-qty');
+    const payTypeInput = document.getElementById('m-order-paytype');
+    
+    const qty = parseInt(qtyInput ? qtyInput.value : 1) || 1;
+    const payType = payTypeInput ? payTypeInput.value : 'UP';
     const unitPrice = window.currentActiveOrder.priceWO || window.currentActiveOrder.priceW || 0;
 
     const unitPriceFormatted = payType === 'UP' ? formatRP(unitPrice) : formatUSD(unitPrice);
     const grandTotal = unitPrice * qty;
     const grandTotalFormatted = payType === 'UP' ? formatRP(grandTotal) : formatUSD(grandTotal);
 
-    document.getElementById('m-order-unitprice').value = unitPriceFormatted;
-    document.getElementById('m-order-total').value = grandTotalFormatted;
+    const priceEl = document.getElementById('m-order-unitprice');
+    if (priceEl) priceEl.value = unitPriceFormatted;
+    
+    const totalEl = document.getElementById('m-order-total');
+    if (totalEl) totalEl.value = grandTotalFormatted;
 };
 
 window.closeOrderModal = function() {
-    document.getElementById('modal-order-panel').style.display = 'none';
+    const modalEl = document.getElementById('modal-order-panel');
+    if (modalEl) modalEl.style.display = 'none';
     window.currentActiveOrder = null;
 };
 
 window.confirmOrderModal = async function() {
     if (!window.currentActiveOrder) return;
 
-    const qty = parseInt(document.getElementById('m-order-qty').value) || 1;
-    const payType = document.getElementById('m-order-paytype').value; // UP, BM, RM
-    const notes = document.getElementById('m-order-notes').value || '-';
+    const qtyInput = document.getElementById('m-order-qty');
+    const payTypeInput = document.getElementById('m-order-paytype');
+    const notesInput = document.getElementById('m-order-notes');
+
+    const qty = parseInt(qtyInput ? qtyInput.value : 1) || 1;
+    const payType = payTypeInput ? payTypeInput.value : 'UP'; // UP, BM, RM
+    const notes = (notesInput && notesInput.value) ? notesInput.value : '-';
     const unitPrice = window.currentActiveOrder.priceWO || window.currentActiveOrder.priceW || 0;
     const grandTotal = unitPrice * qty;
 
