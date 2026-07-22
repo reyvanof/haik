@@ -302,7 +302,7 @@ window.toggleBrangkasType = function() {
 window.saveBrangkas = async function(e) {
     if (e) e.preventDefault();
     const type = document.getElementById('b-type').value;
-    const itemName = document.getElementById('b-item-name').value;
+    const itemName = document.getElementById('b-item-name').value.trim().toUpperCase(); 
     const qty = parseInt(document.getElementById('b-qty').value) || 0;
     const action = document.getElementById('b-action').value;
     const notes = document.getElementById('b-notes').value || '-';
@@ -343,21 +343,15 @@ window.saveBrangkas = async function(e) {
     alert('✅ Brangkas Berhasil Diperbarui!');
 };
 
-// --- FUNGSI UPDATE ---
 window.deleteBrangkasItem = async function(itemName) {
-    if (confirm(`Apakah kamu yakin ingin menghapus '${itemName}' dari daftar?`)) {
-        // Hapus item dari objek items
-        if (window.brangkasState.items.hasOwnProperty(itemName)) {
-            delete window.brangkasState.items[itemName];
-        }
-        
-        // Simpan ke database
+    if (confirm(`Hapus semua variasi '${itemName}' dari brangkas?`)) {
+        Object.keys(window.brangkasState.items).forEach(key => {
+            if (key.toLowerCase() === itemName.toLowerCase()) {
+                delete window.brangkasState.items[key];
+            }
+        });
         await window.saveData();
-        
-        // Re-render semua tabel
         renderAll();
-        
-        alert('Berhasil dihapus!');
     }
 };
 
@@ -575,7 +569,20 @@ function initRealtimeSync() {
         }
         if (docSnap.exists()) {
             const data = docSnap.data();
+            
+            // LOGIKA NORMALISASI DATA (Membersihkan duplikat)
+            const normalizedItems = {};
+            if (data.brangkasState && data.brangkasState.items) {
+                Object.keys(data.brangkasState.items).forEach(key => {
+                    const cleanKey = key.toUpperCase();
+                    const val = data.brangkasState.items[key] || 0;
+                    normalizedItems[cleanKey] = (normalizedItems[cleanKey] || 0) + val;
+                });
+            }
+
             window.brangkasState = data.brangkasState || window.brangkasState;
+            window.brangkasState.items = normalizedItems;
+            
             window.bmcToKelompokData = data.bmcToKelompokData || window.initialBmcToKelompok;
             window.kelompokToBmcData = data.kelompokToBmcData || window.initialKelompokToBmc;
             window.transactionsData = data.transactionsData || [];
