@@ -20,7 +20,7 @@ const docRef = doc(db, "bmc_system", "brangkas_data");
 // GLOBAL STATE
 window.ADMIN_PIN = "6969";
 window.isAdminLoggedIn = false;
-let isInitialLoadComplete = false; // Flag penanda agar tidak menimpa data server dengan data awal lokal
+let isInitialLoadComplete = false;
 
 window.memberCatalogData = [
     { category: 'BODY ARMOR', name: 'VEST', priceBM: 80000, priceUP: 108000, note: '' },
@@ -147,7 +147,7 @@ window.renderBrangkas = function() {
                 <tr>
                     <td style="font-weight:600;">${itemName}</td>
                     <td><span class="badge badge-green">${qty} PCS</span></td>
-                    <td><button class="btn btn-sm btn-red" type="button" onclick="window.deleteBrangkasItem('${itemName}')">Hapus</button></td>
+                    <td><button class="btn btn-sm btn-red delete-btn" type="button" data-name="${itemName}">Hapus</button></td>
                 </tr>
             `;
         }
@@ -288,7 +288,6 @@ window.checkoutMemberCart = async function() {
     alert('✅ Transaksi Keranjang Berhasil Disimpan!');
 };
 
-// LOGIKA INPUT/TARIK KAS & STOK
 window.toggleBrangkasType = function() {
     const type = document.getElementById('b-type').value;
     const itemGroup = document.getElementById('group-b-item-name');
@@ -590,6 +589,14 @@ function initRealtimeSync() {
 window.addEventListener('DOMContentLoaded', () => {
     renderAll();
     initRealtimeSync();
+
+    // Event Delegation: Menangani klik tombol hapus secara dinamis[cite: 6]
+    document.addEventListener('click', function(e) {
+        if (e.target && e.target.classList.contains('delete-btn')) {
+            const itemName = e.target.getAttribute('data-name');
+            window.deleteBrangkasItem(itemName);
+        }
+    });
 
     document.querySelectorAll('form').forEach(form => {
         form.addEventListener('submit', (e) => e.preventDefault());
