@@ -83,6 +83,43 @@ window.orderHistoryData = [];
 function formatRP(num) { return (!num || num === 0) ? 'Rp 0' : 'Rp ' + Number(num).toLocaleString('id-ID'); }
 function formatUSD(num) { return (!num || num === 0) ? '$ ' + Number(num).toLocaleString('en-US') : '$ ' + Number(num).toLocaleString('en-US'); }
 
+
+// NORMALISASI NAMA ITEM
+// Dibutuhkan oleh proses order agar nama seperti "vest", "VEST", atau " Vest "
+// selalu dianggap sebagai item yang sama.
+function normalizeItemName(itemName) {
+    return String(itemName || '')
+        .trim()
+        .replace(/\s+/g, ' ')
+        .toUpperCase();
+}
+
+// Rapikan seluruh key stok sebelum stok ditambah atau dikurangi.
+function normalizeBrangkasItems() {
+    if (!window.brangkasState) {
+        window.brangkasState = {
+            whiteMoney: 0,
+            blackMoney: 0,
+            redMoney: 0,
+            items: {}
+        };
+    }
+
+    const sourceItems = window.brangkasState.items || {};
+    const normalizedItems = {};
+
+    Object.entries(sourceItems).forEach(([itemName, qty]) => {
+        const normalizedName = normalizeItemName(itemName);
+        if (!normalizedName) return;
+
+        normalizedItems[normalizedName] =
+            (Number(normalizedItems[normalizedName]) || 0) +
+            (Number(qty) || 0);
+    });
+
+    window.brangkasState.items = normalizedItems;
+}
+
 // SYSTEM TAB & PERAN
 window.switchTab = function(tabId) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -292,9 +329,10 @@ window.checkoutMemberCart = async function() {
         grandTotal += subtotal;
         itemSummary.push(`${item.name} x${item.qty}`);
 
-        if (window.brangkasState.items[item.name]) {
-            window.brangkasState.items[item.name] = Math.max(0, window.brangkasState.items[item.name] - item.qty);
-        }
+        normalizeBrangkasItems();
+        const stockItemName = normalizeItemName(item.name);
+        const currentStock = Number(window.brangkasState.items[stockItemName]) || 0;
+        window.brangkasState.items[stockItemName] = Math.max(0, currentStock - item.qty);
     });
 
     if (payType === 'UP') window.brangkasState.whiteMoney += grandTotal;
@@ -332,7 +370,7 @@ window.toggleBrangkasType = function() {
 window.saveBrangkas = async function(e) {
     if (e) e.preventDefault();
     const type = document.getElementById('b-type').value;
-    const itemName = document.getElementById('b-item-name').value;
+    const itemName = normalizeItemName(document.getElementById('b-item-name').value);
     const qty = parseInt(document.getElementById('b-qty').value) || 0;
     const action = document.getElementById('b-action').value;
     const notes = document.getElementById('b-notes').value || '-';
