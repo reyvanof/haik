@@ -21,6 +21,7 @@ const docRef = doc(db, "bmc_system", "brangkas_data");
 window.ADMIN_PIN = "6969";
 window.isAdminLoggedIn = false;
 
+// KATALOG ANGGOTA INTERNAL
 window.memberCatalogData = [
     { category: 'BODY ARMOR', name: 'VEST', priceBM: 80000, priceUP: 108000, note: '' },
     { category: 'CLASS 1 (SENJATA +15%)', name: 'CERAMIC', priceBM: 95000, priceUP: 110000, note: 'Khusus Senjata +15%' },
@@ -49,15 +50,97 @@ window.memberCatalogData = [
     { category: 'ATTACHMENT', name: 'GRIP', priceBM: 150000, priceUP: 163000, note: '' }
 ];
 
+// DATA GAMBAR 1: BMC -> KELOMPOK (BMC JUAL KE KELOMPOK)
 window.initialBmcToKelompok = [
-    { group: 'HAKUSHIKAI', category: 'VEST', item: 'VEST', qty: '30-40 PCS', priceWO: 130000, priceW: null, note: '', ket: '' },
-    { group: 'HAKUSHIKAI', category: 'ROBBERY RESULTS', item: 'SPRING', qty: '20 PCS', priceWO: 75000, priceW: null, note: '1:1', ket: 'BARTER WITH PLAT BESI' },
-    { group: 'SHINIGAMI', category: 'VEST', item: 'VEST', qty: '30 PCS', priceWO: 120000, priceW: null, note: '', ket: '' }
+    { group: 'HAKUSHIKAI', category: 'VEST', item: 'VEST', qty: '30-40 PCS', priceWO: 130000, priceW: null, note: '-', ket: '-' },
+    { group: 'HAKUSHIKAI', category: 'ROBBERY RESULTS', item: 'SPRING', qty: '20 PCS', priceWO: 7500, priceW: null, note: '1:1', ket: 'BARTER WITH PLAT BESI' },
+    { group: 'HAKUSHIKAI', category: 'ROBBERY RESULTS', item: 'GEAR', qty: '20 PCS', priceWO: 7500, priceW: null, note: '1:1', ket: 'BARTER WITH PLAT BESI' },
+    { group: 'HAKUSHIKAI', category: 'ROBBERY RESULTS', item: 'KOTAK KARET', qty: '20 PCS', priceWO: 7500, priceW: null, note: '1:1', ket: 'BARTER WITH PLAT BESI' },
+    { group: 'SHINIGAMI', category: 'VEST', item: 'VEST', qty: '30 PCS', priceWO: 120000, priceW: null, note: '-', ket: '-' },
+    { group: 'SHINIGAMI', category: 'ROBBERY RESULTS', item: 'SPRING', qty: '50 PCS EACH', priceWO: 7000, priceW: null, note: '1:1', ket: 'BARTER WITH PLAT BESI' },
+    { group: 'SHINIGAMI', category: 'ROBBERY RESULTS', item: 'GEAR', qty: '50 PCS EACH', priceWO: 7000, priceW: null, note: '1:1', ket: 'BARTER WITH PLAT BESI' },
+    { group: 'H2', category: 'VEST', item: 'VEST', qty: '50 PCS', priceWO: 120000, priceW: null, note: '1:1', ket: '-' },
+    { group: 'H2', category: 'ROBBERY RESULTS', item: 'SPRING', qty: '70 PCS EACH', priceWO: 5000, priceW: null, note: '1:1', ket: 'BARTER WITH PLAT BESI' },
+    { group: 'H2', category: 'ROBBERY RESULTS', item: 'GEAR', qty: '70 PCS EACH', priceWO: 5000, priceW: null, note: '1:1', ket: 'BARTER WITH PLAT BESI' },
+    { group: 'DVC', category: 'VEST', item: 'VEST', qty: '30 PCS', priceWO: 140000, priceW: null, note: '-', ket: '-' },
+    { group: 'REBELLION', category: 'VEST', item: 'VEST', qty: '30 PCS', priceWO: 150000, priceW: null, note: '-', ket: '-' },
+    { group: 'RDF', category: 'VEST', item: 'VEST', qty: 'UNLIMITED', priceWO: 120000, priceW: null, note: '-', ket: '-' },
+    { group: 'HELLSTAR', category: 'VEST', item: 'VEST', qty: '30 PCS', priceWO: 120000, priceW: null, note: '-', ket: '-' },
+    { group: 'AROGANZ', category: 'VEST', item: 'VEST', qty: '30 PCS', priceWO: 150000, priceW: null, note: '-', ket: '-' },
+    { group: 'FREEMASON', category: 'VEST', item: 'VEST', qty: '30 PCS', priceWO: 150000, priceW: null, note: '-', ket: '-' },
+    { group: 'WTMC', category: 'VEST', item: 'VEST', qty: '20 PCS', priceWO: 120000, priceW: null, note: '-', ket: '-' },
+    { group: 'CAMMORA', category: 'VEST', item: 'VEST', qty: 'TBA', priceWO: 0, priceW: null, note: 'TBA', ket: '-' },
+    // ADDON BUSINESS
+    { group: 'ADDON BUSINESS', category: 'ROBBERY EQUIPMENT', item: 'DRILL', qty: 'TBA', priceWO: 50000, priceW: null, note: '-', ket: '-' },
+    { group: 'ADDON BUSINESS', category: 'ROBBERY EQUIPMENT', item: 'ALAT ELECTRONIC', qty: 'TBA', priceWO: 65000, priceW: null, note: '-', ket: '-' },
+    { group: 'ADDON BUSINESS', category: 'ROBBERY EQUIPMENT', item: 'ADVANCE LOCKPICK', qty: 'TBA', priceWO: 0, priceW: null, note: 'TBA', ket: '-' },
+    { group: 'ADDON BUSINESS', category: 'ROBBERY EQUIPMENT', item: 'OBENG', qty: 'TBA', priceWO: 0, priceW: null, note: 'TBA', ket: '-' }
 ];
 
+// DATA GAMBAR 2, 3, 4: KELOMPOK -> BMC (KELOMPOK JUAL KE BMC)
 window.initialKelompokToBmc = [
-    { group: 'HAKUSHIKAI', category: 'SENJATA CLASS 1', item: 'CERAMIC', qty: '30 PCS', priceWO: 280000, priceW: 0, note: '', ket: '' },
-    { group: 'SHINIGAMI', category: 'SENJATA CLASS 1', item: 'REVOLVER', qty: 'UNLIMITED', priceWO: 200000, priceW: null, note: '', ket: '' }
+    // HAKUSHIKAI
+    { group: 'HAKUSHIKAI', category: 'SENJATA CLASS 1', item: 'CERAMIC', qty: '30 PCS', priceWO: 280000, priceW: 0, note: '-', ket: 'WITH JASA: TBA' },
+    { group: 'HAKUSHIKAI', category: 'SENJATA CLASS 1', item: 'REVOLVER', qty: '30 PCS', priceWO: 190000, priceW: 175000, note: '-', ket: '-' },
+    { group: 'HAKUSHIKAI', category: 'SENJATA CLASS 2', item: 'TEC - 9', qty: '30 PCS', priceWO: 290000, priceW: 200000, note: '-', ket: '6 KOTAK KARET, 7 SPRING, 6 GEAR' },
+    { group: 'HAKUSHIKAI', category: 'SENJATA CLASS 2', item: 'MINI SMG', qty: '30 PCS', priceWO: 290000, priceW: 200000, note: '-', ket: '-' },
+    { group: 'HAKUSHIKAI', category: 'SENJATA CLASS 2', item: 'MICRO SMG', qty: '30 PCS', priceWO: 370000, priceW: 240000, note: '-', ket: '-' },
+    { group: 'HAKUSHIKAI', category: 'SENJATA CLASS 2', item: 'SMG', qty: '30 PCS', priceWO: 370000, priceW: 240000, note: '-', ket: '8 KOTAK KARET, 8 SPRING, 7 GEAR' },
+    { group: 'HAKUSHIKAI', category: 'SENJATA CLASS 3', item: 'ASSAULT RIFFLE', qty: '3 PCS', priceWO: 400000, priceW: 0, note: '-', ket: 'WITH JASA: TBA' },
+    
+    // SHINIGAMI
+    { group: 'SHINIGAMI', category: 'SENJATA CLASS 1', item: 'CERAMIC', qty: 'UNLIMITED SELAGI ADA BAHAN', priceWO: 100000, priceW: null, note: '-', ket: '-' },
+    { group: 'SHINIGAMI', category: 'SENJATA CLASS 1', item: 'REVOLVER', qty: 'UNLIMITED SELAGI ADA BAHAN', priceWO: 200000, priceW: null, note: '-', ket: '-' },
+    { group: 'SHINIGAMI', category: 'SENJATA CLASS 2', item: 'TEC - 9', qty: 'UNLIMITED SELAGI ADA BAHAN', priceWO: 250000, priceW: null, note: '-', ket: '-' },
+    { group: 'SHINIGAMI', category: 'SENJATA CLASS 2', item: 'MINI SMG', qty: 'UNLIMITED SELAGI ADA BAHAN', priceWO: 250000, priceW: null, note: '-', ket: '-' },
+    { group: 'SHINIGAMI', category: 'SENJATA CLASS 2', item: 'MICRO SMG', qty: 'UNLIMITED SELAGI ADA BAHAN', priceWO: 280000, priceW: null, note: '-', ket: '-' },
+    { group: 'SHINIGAMI', category: 'SENJATA CLASS 2', item: 'SMG', qty: 'UNLIMITED SELAGI ADA BAHAN', priceWO: 280000, priceW: null, note: '-', ket: '-' },
+    { group: 'SHINIGAMI', category: 'SENJATA CLASS 3', item: 'ASSAULT RIFFLE', qty: 'UNLIMITED SELAGI ADA BAHAN', priceWO: 470000, priceW: null, note: '-', ket: '-' },
+
+    // H2
+    { group: 'H2', category: 'SENJATA CLASS 1', item: 'CERAMIC', qty: '500 PCS', priceWO: 80000, priceW: null, note: '1:1', ket: '-' },
+    { group: 'H2', category: 'SENJATA CLASS 1', item: 'REVOLVER', qty: '500 PCS', priceWO: 160000, priceW: null, note: '1:1', ket: '-' },
+    { group: 'H2', category: 'SENJATA CLASS 2', item: 'TEC - 9', qty: '400 PCS', priceWO: 210000, priceW: null, note: '1:1', ket: '-' },
+    { group: 'H2', category: 'SENJATA CLASS 2', item: 'MINI SMG', qty: '400 PCS', priceWO: 210000, priceW: null, note: '1:1', ket: '-' },
+    { group: 'H2', category: 'SENJATA CLASS 2', item: 'MICRO SMG', qty: '400 PCS', priceWO: 250000, priceW: null, note: '1:1', ket: '-' },
+    { group: 'H2', category: 'SENJATA CLASS 2', item: 'SMG', qty: '400 PCS', priceWO: 250000, priceW: null, note: '1:1', ket: '-' },
+    { group: 'H2', category: 'SENJATA CLASS 3', item: 'ASSAULT RIFFLE', qty: '20-30 PCS', priceWO: 500000, priceW: null, note: '1:1', ket: '-' },
+
+    // CAMMORA
+    { group: 'CAMMORA', category: 'ILLEGAL ITEMS', item: 'SPRING', qty: '-', priceWO: 14000, priceW: 5000, note: 'Rp12.500', ket: 'SPECIAL : ORDER DIATAS 100 PCS' },
+    { group: 'CAMMORA', category: 'ILLEGAL ITEMS', item: 'GEAR', qty: '-', priceWO: 14000, priceW: 5000, note: 'Rp12.500', ket: 'SPECIAL : ORDER DIATAS 100 PCS' },
+    { group: 'CAMMORA', category: 'ILLEGAL ITEMS', item: 'PLAT BESI', qty: '-', priceWO: 7000, priceW: 5000, note: '-', ket: '-' },
+    { group: 'CAMMORA', category: 'ILLEGAL ITEMS', item: 'BUBUK MESIU', qty: '-', priceWO: 8000, priceW: 5000, note: '-', ket: '-' },
+    { group: 'CAMMORA', category: 'ILLEGAL ITEMS', item: 'OLI PELUMAS', qty: '-', priceWO: 7000, priceW: 5000, note: '-', ket: '-' },
+
+    // CORTEZ
+    { group: 'CORTEZ', category: 'ILLEGAL ITEMS', item: 'SPRING / GEAR / PLAT BESI / MESIU', qty: '-', priceWO: 0, priceW: 0, note: '-', ket: 'JASA 5-10K/ITEM' },
+
+    // REBELLION
+    { group: 'REBELLION', category: 'PELURU CLASS 1', item: '9MM', qty: '-', priceWO: 36000, priceW: null, note: '-', ket: '-' },
+    { group: 'REBELLION', category: 'PELURU CLASS 1', item: '44 MAGNUM', qty: '-', priceWO: 40000, priceW: null, note: '-', ket: '-' },
+    { group: 'REBELLION', category: 'PELURU CLASS 2', item: '45 ACP', qty: '-', priceWO: 45000, priceW: null, note: '-', ket: '-' },
+    { group: 'REBELLION', category: 'PELURU CLASS 3', item: '5.56 MM', qty: '-', priceWO: 60000, priceW: null, note: '-', ket: '-' },
+
+    // RDF
+    { group: 'RDF', category: 'PELURU CLASS 1', item: '9MM', qty: '-', priceWO: 34000, priceW: 13000, note: '-', ket: '-' },
+    { group: 'RDF', category: 'PELURU CLASS 1', item: '44 MAGNUM', qty: '-', priceWO: 33000, priceW: 15000, note: '-', ket: '-' },
+    { group: 'RDF', category: 'PELURU CLASS 2', item: '45 ACP', qty: '-', priceWO: 38000, priceW: 22000, note: '-', ket: '-' },
+    { group: 'RDF', category: 'PELURU CLASS 3', item: '5.56 MM', qty: '-', priceWO: 56000, priceW: 33000, note: '-', ket: '-' },
+
+    // SINGARAJA
+    { group: 'SINGARAJA', category: 'PELURU CLASS 1', item: '9MM', qty: '70 PCS / WEEK', priceWO: 30000, priceW: null, note: '-', ket: '-' },
+    { group: 'SINGARAJA', category: 'PELURU CLASS 1', item: '44 MAGNUM', qty: '70 PCS / WEEK', priceWO: 30000, priceW: null, note: '-', ket: '-' },
+    { group: 'SINGARAJA', category: 'PELURU CLASS 2', item: '45 ACP', qty: '70 PCS / WEEK', priceWO: 30000, priceW: null, note: '-', ket: '-' },
+    { group: 'SINGARAJA', category: 'PELURU CLASS 3', item: '5.56 MM', qty: '70 PCS / WEEK', priceWO: 50000, priceW: null, note: '-', ket: '-' },
+
+    // HELLSTAR
+    { group: 'HELLSTAR', category: 'MONEY LAUNDERING', item: 'BLACK MONEY -> RED MONEY', qty: 'CUCI > 1 JUTA', priceWO: 0, priceW: null, note: '10%', ket: 'CUCI LEBIH DARI 1 JUTA' },
+    { group: 'HELLSTAR', category: 'MONEY LAUNDERING', item: 'RED MONEY -> WHITE MONEY', qty: 'CUCI > 1 JUTA', priceWO: 0, priceW: null, note: '20%', ket: 'CUCI LEBIH DARI 1 JUTA' },
+
+    // AROGANZ
+    { group: 'AROGANZ', category: 'MONEY LAUNDERING', item: 'BLACK MONEY -> RED MONEY', qty: '-', priceWO: 0, priceW: null, note: '-', ket: '-' },
+    { group: 'AROGANZ', category: 'MONEY LAUNDERING', item: 'RED MONEY -> WHITE MONEY', qty: '-', priceWO: 0, priceW: null, note: '-', ket: '-' }
 ];
 
 window.brangkasState = {
@@ -73,8 +156,14 @@ window.kelompokToBmcData = [...window.initialKelompokToBmc];
 window.transactionsData = [];
 
 // HELPER FORMAT
-function formatRP(num) { return 'Rp ' + (num || 0).toLocaleString('id-ID'); }
-function formatUSD(num) { return '$ ' + (num || 0).toLocaleString('en-US'); }
+function formatRP(num) { 
+    if (!num || num === 0) return '-';
+    return 'Rp ' + num.toLocaleString('id-ID'); 
+}
+function formatUSD(num) { 
+    if (!num || num === 0) return '-';
+    return '$ ' + num.toLocaleString('en-US'); 
+}
 
 // RENDER FUNCTIONS
 window.renderBrangkas = function() {
@@ -170,7 +259,7 @@ window.renderBmcToKelompok = function() {
                 <td style="color: var(--accent-red); font-size: 0.85rem;">${item.note || '-'}</td>
                 <td style="color: var(--text-muted); font-size: 0.85rem;">${item.ket || '-'}</td>
                 <td>
-                    <button class="btn btn-sm btn-blue" onclick="window.openSellModal('${item.item} (${item.group})', ${item.priceWO}, ${item.priceWO}, 'BMC -> Kelompok')">Proses Order</button>
+                    <button class="btn btn-sm btn-blue" onclick="alert('Fitur Order Custom')">Proses Order</button>
                 </td>
             </tr>
         `;
@@ -193,7 +282,7 @@ window.renderKelompokToBmc = function() {
                 <td style="color: var(--accent-red); font-size: 0.85rem;">${item.note || '-'}</td>
                 <td style="color: var(--text-muted); font-size: 0.85rem;">${item.ket || '-'}</td>
                 <td>
-                    <button class="btn btn-sm btn-green" onclick="window.openSellModal('${item.item} dari ${item.group}', ${item.priceWO}, ${item.priceWO}, 'Kelompok -> BMC')">Terima / Beli</button>
+                    <button class="btn btn-sm btn-green" onclick="alert('Fitur Beli / Terima')">Terima / Beli</button>
                 </td>
             </tr>
         `;
@@ -252,8 +341,9 @@ function initRealtimeSync() {
         if (docSnap.exists()) {
             const data = docSnap.data();
             window.brangkasState = data.brangkasState || window.brangkasState;
-            window.bmcToKelompokData = data.bmcToKelompokData || window.initialBmcToKelompok;
-            window.kelompokToBmcData = data.kelompokToBmcData || window.initialKelompokToBmc;
+            // UPDATE: Force reset data kelompok jika struktur lokal diperbarui
+            window.bmcToKelompokData = window.initialBmcToKelompok;
+            window.kelompokToBmcData = window.initialKelompokToBmc;
             window.transactionsData = data.transactionsData || [];
 
             if (statusEl) {
@@ -278,18 +368,17 @@ function initRealtimeSync() {
             statusEl.style.backgroundColor = "#fee2e2";
             statusEl.style.color = "#991b1b";
         }
-        // Jika offline/gagal konek ke firebase, tetap tampilkan data lokal awal agar tidak kosong
         renderAll();
     });
 }
 
-// UI ACTIONS
+// UI ACTIONS & CART FUNCTIONS
 window.handleRoleChange = function() {
     const roleSelect = document.getElementById('user-role');
     if (roleSelect.value === 'admin') {
         if (!window.isAdminLoggedIn) {
-            document.getElementById('modal-pin').classList.add('active');
-            document.getElementById('input-pin-admin').focus();
+            document.getElementById('modal-pin')?.classList.add('active');
+            document.getElementById('input-pin-admin')?.focus();
         } else {
             window.showAdminTabs();
         }
@@ -300,24 +389,24 @@ window.handleRoleChange = function() {
 };
 
 window.submitAdminPin = function() {
-    const pinVal = document.getElementById('input-pin-admin').value;
+    const pinVal = document.getElementById('input-pin-admin')?.value;
     if (pinVal === window.ADMIN_PIN) {
         window.isAdminLoggedIn = true;
-        document.getElementById('modal-pin').classList.remove('active');
-        document.getElementById('input-pin-admin').value = '';
+        document.getElementById('modal-pin')?.classList.remove('active');
+        if (document.getElementById('input-pin-admin')) document.getElementById('input-pin-admin').value = '';
         window.showAdminTabs();
         alert('Akses Admin Diterima!');
     } else {
         alert('PIN Salah!');
-        document.getElementById('input-pin-admin').value = '';
+        if (document.getElementById('input-pin-admin')) document.getElementById('input-pin-admin').value = '';
         window.cancelAdminAuth();
     }
 };
 
 window.cancelAdminAuth = function() {
-    document.getElementById('modal-pin').classList.remove('active');
-    document.getElementById('input-pin-admin').value = '';
-    document.getElementById('user-role').value = 'member';
+    document.getElementById('modal-pin')?.classList.remove('active');
+    if (document.getElementById('input-pin-admin')) document.getElementById('input-pin-admin').value = '';
+    if (document.getElementById('user-role')) document.getElementById('user-role').value = 'member';
     window.hideAdminTabs();
 };
 
@@ -370,21 +459,74 @@ window.clearCart = function() {
     window.renderCart();
 };
 
-window.filterMemberCatalog = function() {
-    const q = document.getElementById('search-member-item').value.toLowerCase();
-    const rows = document.querySelectorAll('#tbody-member-catalog tr');
-    rows.forEach(row => {
-        row.style.display = row.innerText.toLowerCase().includes(q) ? '' : 'none';
-    });
-};
+window.checkoutMemberCart = async function() {
+    if (window.cartItems.length === 0) {
+        alert("Keranjang masih kosong! Silakan pilih barang dulu.");
+        return;
+    }
 
-window.closeModal = function(modalId) {
-    document.getElementById(modalId).classList.remove('active');
+    const buyerInputs = document.querySelectorAll('input[placeholder*="Alex"], input[placeholder*="Pembeli"]');
+    const sellerInputs = document.querySelectorAll('input[placeholder*="Haqi"], input[placeholder*="Penjual"]');
+    
+    const buyerInput = buyerInputs.length > 0 ? buyerInputs[0].value.trim() : '';
+    const sellerInput = sellerInputs.length > 0 ? sellerInputs[0].value.trim() : '';
+    
+    const paySelect = document.querySelector('select:has(option[value*="Uang"]), #cart-pay-type');
+    const payType = paySelect ? (paySelect.value.includes('Black') || paySelect.value === 'BM' ? 'BM' : 'UP') : 'UP';
+
+    if (!buyerInput || !sellerInput) {
+        alert("Harap isi 'Nama Anggota / Pembeli' dan 'Belinya Ke Siapa (Penjual)'!");
+        return;
+    }
+
+    let totalNominal = 0;
+    let itemSummaryList = [];
+
+    window.cartItems.forEach(item => {
+        const price = payType === 'BM' ? item.priceBM : item.priceUP;
+        totalNominal += (price * item.qty);
+        itemSummaryList.push(`${item.name} (${item.qty}x)`);
+    });
+
+    const formattedTotal = payType === 'BM' ? formatUSD(totalNominal) : formatRP(totalNominal);
+    const itemSummaryStr = itemSummaryList.join(', ');
+
+    const newTransaction = {
+        time: new Date().toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' }),
+        type: 'PEMASUKAN',
+        item: itemSummaryStr,
+        qty: window.cartItems.reduce((acc, curr) => acc + curr.qty, 0),
+        total: formattedTotal,
+        payType: payType === 'BM' ? 'Black Money' : 'Uang Putih',
+        notes: `Pembeli: ${buyerInput} | Penjual: ${sellerInput}`
+    };
+
+    window.transactionsData.unshift(newTransaction);
+
+    if (payType === 'BM') {
+        window.brangkasState.blackMoney += totalNominal;
+    } else {
+        window.brangkasState.whiteMoney += totalNominal;
+    }
+
+    window.cartItems.forEach(item => {
+        if (window.brangkasState.items && window.brangkasState.items[item.name]) {
+            window.brangkasState.items[item.name] = Math.max(0, window.brangkasState.items[item.name] - item.qty);
+        }
+    });
+
+    await window.saveData();
+    window.clearCart();
+    
+    buyerInputs.forEach(i => i.value = '');
+    sellerInputs.forEach(i => i.value = '');
+
+    renderAll();
+    alert("✅ Transaksi Berhasil Diproses & Dicatat ke Rekapan Transaksi!");
 };
 
 // INIT ON LOAD
 window.addEventListener('DOMContentLoaded', () => {
-    // Jalankan render awal langsung tanpa menunggu Firebase
     renderAll();
     initRealtimeSync();
 
@@ -393,5 +535,10 @@ window.addEventListener('DOMContentLoaded', () => {
         pinInput.addEventListener('keyup', (e) => {
             if (e.key === 'Enter') window.submitAdminPin();
         });
+    }
+
+    const checkoutBtn = document.querySelector('button:has(span), button.btn-green');
+    if (checkoutBtn && checkoutBtn.innerText.includes('PROSES ORDER')) {
+        checkoutBtn.onclick = window.checkoutMemberCart;
     }
 });
