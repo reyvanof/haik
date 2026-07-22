@@ -146,16 +146,31 @@ window.renderBrangkas = function() {
         Object.entries(window.brangkasState.items || {}).forEach(([itemName, qty]) => {
             totalItems += qty;
             const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td style="font-weight:600;">${itemName}</td>
-                <td><span class="badge badge-green">${qty} PCS</span></td>
-                <td>
-                    <button class="btn btn-sm btn-red" type="button" 
-                        onclick="window.deleteBrangkasItem('${itemName}')">
-                        Hapus
-                    </button>
-                </td>
-            `;
+            
+            // Nama Barang
+            const tdName = document.createElement('td');
+            tdName.style.fontWeight = '600';
+            tdName.innerText = itemName;
+            
+            // Jumlah
+            const tdQty = document.createElement('td');
+            tdQty.innerHTML = `<span class="badge badge-green">${qty} PCS</span>`;
+            
+            // Aksi
+            const tdAction = document.createElement('td');
+            const btnDelete = document.createElement('button');
+            btnDelete.className = 'btn btn-sm btn-red';
+            btnDelete.innerText = 'Hapus';
+            btnDelete.type = 'button';
+            // Perbaikan: Gunakan fungsi JS langsung agar tidak error tanda kutip
+            btnDelete.onclick = function() { window.deleteBrangkasItem(itemName); };
+            
+            tdAction.appendChild(btnDelete);
+            
+            tr.appendChild(tdName);
+            tr.appendChild(tdQty);
+            tr.appendChild(tdAction);
+            
             tbody.appendChild(tr);
         });
     }
@@ -165,19 +180,11 @@ window.renderBrangkas = function() {
 };
 
 window.deleteBrangkasItem = async function(itemName) {
-    console.log("Mencoba menghapus item:", itemName);
-    
-    // Konfirmasi penghapusan
     if (!confirm(`Yakin ingin menghapus ${itemName}?`)) return;
 
-    // Hapus dari state
     if (window.brangkasState.items[itemName] !== undefined) {
         delete window.brangkasState.items[itemName];
-        
-        // Simpan ke Firestore
         await window.saveData();
-        
-        // Paksa render ulang UI
         window.renderBrangkas();
         alert(`✅ ${itemName} berhasil dihapus!`);
     } else {
@@ -185,6 +192,7 @@ window.deleteBrangkasItem = async function(itemName) {
     }
 };
 
+// (Sisa kode Anda tetap sama...)
 window.renderMemberCatalog = function(filterText = '') {
     const tbody = document.getElementById('tbody-member-catalog');
     if (!tbody) return;
@@ -216,7 +224,6 @@ window.filterMemberCatalog = function() {
     window.renderMemberCatalog(text);
 };
 
-// LOGIKA KERANJANG
 window.addToCart = function(name, priceBM, priceUP) {
     const existing = window.cartItems.find(i => i.name === name);
     if (existing) {
@@ -317,7 +324,6 @@ window.checkoutMemberCart = async function() {
     alert('✅ Transaksi Keranjang Berhasil Disimpan!');
 };
 
-// LOGIKA INPUT/TARIK KAS & STOK
 window.toggleBrangkasType = function() {
     const type = document.getElementById('b-type').value;
     const itemGroup = document.getElementById('group-b-item-name');
