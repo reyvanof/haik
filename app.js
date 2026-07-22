@@ -20,7 +20,7 @@ const docRef = doc(db, "bmc_system", "brangkas_data");
 // GLOBAL STATE
 window.ADMIN_PIN = "6969";
 window.isAdminLoggedIn = false;
-let isInitialLoadComplete = false; 
+let isInitialLoadComplete = false;
 
 window.memberCatalogData = [
     { category: 'BODY ARMOR', name: 'VEST', priceBM: 80000, priceUP: 108000, note: '' },
@@ -143,12 +143,11 @@ window.renderBrangkas = function() {
         tbody.innerHTML = '';
         for (let [itemName, qty] of Object.entries(window.brangkasState.items || {})) {
             totalItems += qty;
-            // Update: Menggunakan class delete-btn dan atribut data-name
             tbody.innerHTML += `
                 <tr>
                     <td style="font-weight:600;">${itemName}</td>
                     <td><span class="badge badge-green">${qty} PCS</span></td>
-                    <td><button class="btn btn-sm btn-red delete-btn" type="button" data-name="${itemName}">Hapus</button></td>
+                    <td><button class="btn btn-sm btn-red" type="button" onclick="event.preventDefault(); window.deleteBrangkasItem('${itemName}')">Hapus</button></td>
                 </tr>
             `;
         }
@@ -303,8 +302,7 @@ window.toggleBrangkasType = function() {
 window.saveBrangkas = async function(e) {
     if (e) e.preventDefault();
     const type = document.getElementById('b-type').value;
-    // Fix: Force uppercase untuk mencegah duplikasi "vest"/"VEST"
-    const itemName = document.getElementById('b-item-name').value.toUpperCase();
+    const itemName = document.getElementById('b-item-name').value;
     const qty = parseInt(document.getElementById('b-qty').value) || 0;
     const action = document.getElementById('b-action').value;
     const notes = document.getElementById('b-notes').value || '-';
@@ -592,14 +590,6 @@ function initRealtimeSync() {
 window.addEventListener('DOMContentLoaded', () => {
     renderAll();
     initRealtimeSync();
-
-    // Event Delegation: Menangani klik tombol hapus secara dinamis
-    document.addEventListener('click', function(e) {
-        if (e.target && e.target.classList.contains('delete-btn')) {
-            const itemName = e.target.getAttribute('data-name');
-            window.deleteBrangkasItem(itemName);
-        }
-    });
 
     document.querySelectorAll('form').forEach(form => {
         form.addEventListener('submit', (e) => e.preventDefault());
