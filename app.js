@@ -120,6 +120,25 @@ function normalizeBrangkasItems() {
     window.brangkasState.items = normalizedItems;
 }
 
+function normalizeOrderHistoryData() {
+    if (!Array.isArray(window.orderHistoryData)) {
+        window.orderHistoryData = [];
+        return;
+    }
+
+    window.orderHistoryData = window.orderHistoryData.map(order => ({
+        ...order,
+        group: String(order.group || '-').trim() || '-',
+        item: normalizeItemName(order.item || '-'),
+        qty: Number(order.qty) || 0,
+        unitPrice: order.unitPrice || '-',
+        total: order.total || '-',
+        payType: order.payType || '-',
+        notes: String(order.notes || '-').trim() || '-',
+        status: String(order.status || 'PENDING').trim().toUpperCase() === 'DONE' ? 'DONE' : 'PENDING'
+    }));
+}
+
 // SYSTEM TAB & PERAN
 window.switchTab = function(tabId) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -557,7 +576,8 @@ window.processTransaction = async function(e) {
         unitPrice: payType === 'UP' ? formatRP(unitPrice) : formatUSD(unitPrice),
         total: payType === 'UP' ? formatRP(total) : formatUSD(total),
         payType: payType === 'UP' ? 'Uang Putih' : 'Black Money',
-        notes: notes
+        notes: notes,
+        status: 'PENDING'
     };
 
     // Order masuk ke panel Riwayat Order, bukan ke transaksi masuk/keluar.
@@ -662,44 +682,64 @@ window.renderOrderHistory = function() {
 
     if (!bmcToGroupBody || !groupToBmcBody) return;
 
+    normalizeOrderHistoryData();
+
     const buildRows = (records, emptyText) => {
         if (records.length === 0) {
             return `
                 <tr>
-                    <td colspan="8" style="text-align:center; color:var(--text-muted);">
+                    <td colspan="10" style="text-align:center; color:var(--text-muted);">
                         ${emptyText}
                     </td>
                 </tr>
             `;
         }
 
-        return records.map(order => `
-            <tr>
-                <td style="color:var(--text-muted); font-size:0.85rem;">
-                    ${order.time}
-                </td>
-                <td style="font-weight:bold; color:var(--accent-gold);">
-                    ${order.group || '-'}
-                </td>
-                <td style="font-weight:600;">${order.item}</td>
-                <td>${order.qty} PCS</td>
-                <td>${order.unitPrice || '-'}</td>
-                <td style="font-weight:bold; color:var(--accent-green);">
-                    ${order.total}
-                </td>
-                <td><span class="badge badge-black">${order.payType}</span></td>
-                <td style="color:var(--text-muted); font-size:0.85rem;">
-                    ${order.notes || '-'}
-                </td>
-            </tr>
-        `).join('');
+        return records.map(order => {
+            const statusClass = order.status === 'DONE' ? 'badge-green' : 'badge-red';
+            return `
+                <tr>
+                    <td style="color:var(--text-muted); font-size:0.85rem;">
+                        ${order.time}
+                    </td>
+                    <td style="font-weight:bold; color:var(--accent-gold);">
+                        ${order.group || '-'}
+                    </td>
+                    <td style="font-weight:600;">${order.item}</td>
+                    <td>${order.qty} PCS</td>
+                    <td>${order.unitPrice || '-'}</td>
+                    <td style="font-weight:bold; color:var(--accent-green);">
+                        ${order.total}
+                    </td>
+                    <td><span class="badge badge-black">${order.payType}</span></td>
+                    <td style="color:var(--text-muted); font-size:0.85rem; max-width:220px;">
+                        ${order.notes || '-'}
+                    </td>
+                    <td><span class="badge ${statusClass}">${order.status}</span></td>
+                    <td>
+                        <button
+                            class="btn btn-sm btn-blue"
+                            type="button"
+                            onclick="window.openEditOrderHistoryModal(${order._index})"
+                        >
+                            Edit
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
     };
 
-    const bmcToGroup = (window.orderHistoryData || []).filter(
+    const enrichedOrders = (window.orderHistoryData || []).map((order, index) => ({
+        ...order,
+        _index: index
+    }));
+
+    const bmcToGroup = enrichedOrders.filter(
         order => order.direction === 'BMC_TO_KELOMPOK'
     );
 
-    const groupToBmc = (window.orderHistoryData || []).filter(
+    const groupToBmc = enrichedOrders.filter(
         order => order.direction === 'KELOMPOK_TO_BMC'
     );
 
@@ -712,6 +752,40 @@ window.renderOrderHistory = function() {
         groupToBmc,
         'Belum ada order Kelompok ke BMC yang diproses.'
     );
+};
+
+window.openEditOrderHistoryModal = function(orderIndex) {
+    const order = (window.orderHistoryData || [])[orderIndex];
+    if (!order) return alert('❌ Data order tidak ditemukan.');
+
+    document.getElementById('edit-order-index').value = orderIndex;
+    document.getElementById('edit-order-summary').value = `${order.group || '-'} | ${order.item} | ${order.qty} PCS`;
+    document.getElementById('edit-order-status').value = order.status === 'DONE' ? 'DONE' : 'PENDING';
+    document.getElementById('edit-order-notes').value = order.notes && order.notes !== '-' ? order.notes : '';
+    document.getElementById('modal-edit-order').classList.add('active');
+};
+
+window.saveOrderHistoryEdit = async function(e) {
+    if (e) e.preventDefault();
+
+    const orderIndex = parseInt(document.getElementById('edit-order-index').value, 10);
+    const order = (window.orderHistoryData || [])[orderIndex];
+    if (!order) return alert('❌ Data order tidak ditemukan.');
+
+    const newStatus = String(document.getElementById('edit-order-status').value || 'PENDING').toUpperCase();
+    const newNotes = String(document.getElementById('edit-order-notes').value || '').trim() || '-';
+
+    window.orderHistoryData[orderIndex] = {
+        ...order,
+        status: newStatus === 'DONE' ? 'DONE' : 'PENDING',
+        notes: newNotes,
+        updatedAt: new Date().toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' })
+    };
+
+    await window.saveData();
+    renderAll();
+    window.closeModal('modal-edit-order');
+    alert('✅ Status dan keterangan order berhasil diperbarui!');
 };
 
 window.clearTransactionsByType = async function(transactionType) {
@@ -790,7 +864,8 @@ function migrateLegacyOrderTransactions() {
             unitPrice: '-',
             total: tx.total,
             payType: tx.payType,
-            notes: cleanedNotes
+            notes: cleanedNotes,
+            status: 'PENDING'
         });
     });
 
@@ -853,9 +928,11 @@ function initRealtimeSync() {
             window.kelompokToBmcData = data.kelompokToBmcData || window.initialKelompokToBmc;
             window.transactionsData = data.transactionsData || [];
             window.orderHistoryData = data.orderHistoryData || [];
+            normalizeOrderHistoryData();
         } else {
             console.log("ℹ️ Dokumen Firestore belum ada, membuat dokumen awal...");
             window.orderHistoryData = [];
+            normalizeOrderHistoryData();
             isInitialLoadComplete = true;
             saveDataToCloud();
         }
