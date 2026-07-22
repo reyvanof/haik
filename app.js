@@ -128,7 +128,7 @@ window.closeModal = function(modalId) {
     document.getElementById(modalId).classList.remove('active');
 };
 
-// RENDER FUNCTIONS
+// RENDER FUNCTIONS - TERBARU
 window.renderBrangkas = function() {
     const wEl = document.getElementById('stat-white-money');
     if (wEl) wEl.innerText = formatRP(window.brangkasState.whiteMoney);
@@ -139,21 +139,50 @@ window.renderBrangkas = function() {
 
     let totalItems = 0;
     const tbody = document.getElementById('tbody-brangkas-items');
+    
     if (tbody) {
-        tbody.innerHTML = '';
-        for (let [itemName, qty] of Object.entries(window.brangkasState.items || {})) {
+        tbody.innerHTML = ''; 
+        // Loop data
+        Object.entries(window.brangkasState.items || {}).forEach(([itemName, qty]) => {
             totalItems += qty;
-            tbody.innerHTML += `
-                <tr>
-                    <td style="font-weight:600;">${itemName}</td>
-                    <td><span class="badge badge-green">${qty} PCS</span></td>
-                    <td><button class="btn btn-sm btn-red" type="button" onclick="event.preventDefault(); window.deleteBrangkasItem('${itemName}')">Hapus</button></td>
-                </tr>
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="font-weight:600;">${itemName}</td>
+                <td><span class="badge badge-green">${qty} PCS</span></td>
+                <td>
+                    <button class="btn btn-sm btn-red" type="button" 
+                        onclick="window.deleteBrangkasItem('${itemName}')">
+                        Hapus
+                    </button>
+                </td>
             `;
-        }
+            tbody.appendChild(tr);
+        });
     }
+    
     const countEl = document.getElementById('stat-item-count');
     if (countEl) countEl.innerText = totalItems + ' PCS';
+};
+
+window.deleteBrangkasItem = async function(itemName) {
+    console.log("Mencoba menghapus item:", itemName);
+    
+    // Konfirmasi penghapusan
+    if (!confirm(`Yakin ingin menghapus ${itemName}?`)) return;
+
+    // Hapus dari state
+    if (window.brangkasState.items[itemName] !== undefined) {
+        delete window.brangkasState.items[itemName];
+        
+        // Simpan ke Firestore
+        await window.saveData();
+        
+        // Paksa render ulang UI
+        window.renderBrangkas();
+        alert(`✅ ${itemName} berhasil dihapus!`);
+    } else {
+        alert("❌ Gagal: Item tidak ditemukan di sistem.");
+    }
 };
 
 window.renderMemberCatalog = function(filterText = '') {
@@ -302,7 +331,7 @@ window.toggleBrangkasType = function() {
 window.saveBrangkas = async function(e) {
     if (e) e.preventDefault();
     const type = document.getElementById('b-type').value;
-    const itemName = document.getElementById('b-item-name').value.trim().toUpperCase(); 
+    const itemName = document.getElementById('b-item-name').value;
     const qty = parseInt(document.getElementById('b-qty').value) || 0;
     const action = document.getElementById('b-action').value;
     const notes = document.getElementById('b-notes').value || '-';
@@ -341,18 +370,6 @@ window.saveBrangkas = async function(e) {
     await window.saveData();
     renderAll();
     alert('✅ Brangkas Berhasil Diperbarui!');
-};
-
-window.deleteBrangkasItem = async function(itemName) {
-    if (confirm(`Hapus semua variasi '${itemName}' dari brangkas?`)) {
-        Object.keys(window.brangkasState.items).forEach(key => {
-            if (key.toLowerCase() === itemName.toLowerCase()) {
-                delete window.brangkasState.items[key];
-            }
-        });
-        await window.saveData();
-        renderAll();
-    }
 };
 
 window.renderBmcToKelompok = function() {
@@ -569,20 +586,7 @@ function initRealtimeSync() {
         }
         if (docSnap.exists()) {
             const data = docSnap.data();
-            
-            // LOGIKA NORMALISASI DATA (Membersihkan duplikat)
-            const normalizedItems = {};
-            if (data.brangkasState && data.brangkasState.items) {
-                Object.keys(data.brangkasState.items).forEach(key => {
-                    const cleanKey = key.toUpperCase();
-                    const val = data.brangkasState.items[key] || 0;
-                    normalizedItems[cleanKey] = (normalizedItems[cleanKey] || 0) + val;
-                });
-            }
-
             window.brangkasState = data.brangkasState || window.brangkasState;
-            window.brangkasState.items = normalizedItems;
-            
             window.bmcToKelompokData = data.bmcToKelompokData || window.initialBmcToKelompok;
             window.kelompokToBmcData = data.kelompokToBmcData || window.initialKelompokToBmc;
             window.transactionsData = data.transactionsData || [];
