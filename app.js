@@ -20,6 +20,7 @@ const docRef = doc(db, "bmc_system", "brangkas_data");
 // GLOBAL STATE
 window.ADMIN_PIN = "6969";
 window.isAdminLoggedIn = false;
+let isInitialLoadComplete = false; // Flag penanda agar tidak menimpa data server dengan data awal lokal
 
 window.memberCatalogData = [
     { category: 'BODY ARMOR', name: 'VEST', priceBM: 80000, priceUP: 108000, note: '' },
@@ -211,7 +212,8 @@ window.renderCart = function() {
     const tbody = document.getElementById('tbody-cart-items');
     if (!tbody) return;
     tbody.innerHTML = '';
-    const payType = document.getElementById('cart-pay-type').value;
+    const payTypeEl = document.getElementById('cart-pay-type');
+    const payType = payTypeEl ? payTypeEl.value : 'UP';
     let grandTotal = 0;
 
     window.cartItems.forEach((item, index) => {
@@ -260,7 +262,6 @@ window.checkoutMemberCart = async function() {
         grandTotal += subtotal;
         itemSummary.push(`${item.name} x${item.qty}`);
 
-        // Potong stok jika ada
         if (window.brangkasState.items[item.name]) {
             window.brangkasState.items[item.name] = Math.max(0, window.brangkasState.items[item.name] - item.qty);
         }
@@ -534,6 +535,12 @@ function renderAll() {
 
 // SYNC FIREBASE
 async function saveDataToCloud() {
+    if (!isInitialLoadComplete) {
+        console.warn("⚠️ Menunda simpan: Data server sedang dalam proses dimuat...");
+        return;
+    }
+    
+    console.log("⏳ Menulis data ke Firestore...");
     try {
         await setDoc(docRef, {
             brangkasState: window.brangkasState,
@@ -542,8 +549,9 @@ async function saveDataToCloud() {
             transactionsData: window.transactionsData,
             lastUpdated: new Date().toISOString()
         }, { merge: true });
+        console.log("✅ Update data ke Firestore BERHASIL.");
     } catch (error) {
-        console.error("Gagal simpan ke Cloud:", error);
+        console.error("❌ Gagal simpan ke Firestore:", error);
     }
 }
 window.saveData = saveDataToCloud;
@@ -562,10 +570,15 @@ function initRealtimeSync() {
             window.kelompokToBmcData = data.kelompokToBmcData || window.initialKelompokToBmc;
             window.transactionsData = data.transactionsData || [];
         } else {
+            console.log("ℹ️ Dokumen Firestore belum ada, membuat dokumen awal...");
+            isInitialLoadComplete = true;
             saveDataToCloud();
         }
+        
+        isInitialLoadComplete = true;
         renderAll();
     }, (error) => {
+        console.error("❌ Firebase Realtime Error:", error);
         if (statusEl) {
             statusEl.innerText = "❌ Disconnected";
             statusEl.style.backgroundColor = "#ef4444";
