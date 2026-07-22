@@ -20,7 +20,7 @@ const docRef = doc(db, "bmc_system", "brangkas_data");
 // GLOBAL STATE
 window.ADMIN_PIN = "6969";
 window.isAdminLoggedIn = false;
-let isInitialLoadComplete = false; // Flag penanda agar tidak menimpa data server dengan data awal lokal
+let isInitialLoadComplete = false;
 
 window.memberCatalogData = [
     { category: 'BODY ARMOR', name: 'VEST', priceBM: 80000, priceUP: 108000, note: '' },
@@ -147,7 +147,7 @@ window.renderBrangkas = function() {
                 <tr>
                     <td style="font-weight:600;">${itemName}</td>
                     <td><span class="badge badge-green">${qty} PCS</span></td>
-                    <td><button class="btn btn-sm btn-red" type="button" onclick="window.deleteBrangkasItem('${itemName}')">Hapus</button></td>
+                    <td><button class="btn btn-sm btn-red" type="button" onclick="event.preventDefault(); window.deleteBrangkasItem('${itemName}')">Hapus</button></td>
                 </tr>
             `;
         }
