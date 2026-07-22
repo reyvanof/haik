@@ -20,7 +20,7 @@ const docRef = doc(db, "bmc_system", "brangkas_data");
 // GLOBAL STATE
 window.ADMIN_PIN = "6969";
 window.isAdminLoggedIn = false;
-let isInitialLoadComplete = false;
+let isInitialLoadComplete = false; 
 
 window.memberCatalogData = [
     { category: 'BODY ARMOR', name: 'VEST', priceBM: 80000, priceUP: 108000, note: '' },
@@ -143,6 +143,7 @@ window.renderBrangkas = function() {
         tbody.innerHTML = '';
         for (let [itemName, qty] of Object.entries(window.brangkasState.items || {})) {
             totalItems += qty;
+            // Update: Menggunakan class delete-btn dan atribut data-name
             tbody.innerHTML += `
                 <tr>
                     <td style="font-weight:600;">${itemName}</td>
@@ -288,6 +289,7 @@ window.checkoutMemberCart = async function() {
     alert('✅ Transaksi Keranjang Berhasil Disimpan!');
 };
 
+// LOGIKA INPUT/TARIK KAS & STOK
 window.toggleBrangkasType = function() {
     const type = document.getElementById('b-type').value;
     const itemGroup = document.getElementById('group-b-item-name');
@@ -301,7 +303,8 @@ window.toggleBrangkasType = function() {
 window.saveBrangkas = async function(e) {
     if (e) e.preventDefault();
     const type = document.getElementById('b-type').value;
-    const itemName = document.getElementById('b-item-name').value;
+    // Fix: Force uppercase untuk mencegah duplikasi "vest"/"VEST"
+    const itemName = document.getElementById('b-item-name').value.toUpperCase();
     const qty = parseInt(document.getElementById('b-qty').value) || 0;
     const action = document.getElementById('b-action').value;
     const notes = document.getElementById('b-notes').value || '-';
@@ -590,7 +593,7 @@ window.addEventListener('DOMContentLoaded', () => {
     renderAll();
     initRealtimeSync();
 
-    // Event Delegation: Menangani klik tombol hapus secara dinamis[cite: 6]
+    // Event Delegation: Menangani klik tombol hapus secara dinamis
     document.addEventListener('click', function(e) {
         if (e.target && e.target.classList.contains('delete-btn')) {
             const itemName = e.target.getAttribute('data-name');
