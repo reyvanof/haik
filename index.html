@@ -769,51 +769,7 @@
             </form>
         </div>
     </div>
-<!-- MODAL TRANSAKSI ORDER PANEL -->
-<div id="modal-order-panel" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center;">
-  <div style="background:#161b26; border:1px solid #2d3748; padding:24px; border-radius:12px; width:100%; max-width:480px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.5);">
-    <h3 id="m-order-title" style="color:#f59e0b; margin-top:0; font-size:1.2rem; margin-bottom:16px;">Transaksi Item: -</h3>
-    
-    <div style="margin-bottom:12px;">
-      <label style="display:block; color:#a0aec0; font-size:0.85rem; margin-bottom:4px;">Nama Barang</label>
-      <input type="text" id="m-order-item" readonly style="width:100%; background:#0f172a; border:1px solid #334155; color:#fff; padding:10px; border-radius:6px; box-sizing:border-box;">
-    </div>
 
-    <div style="margin-bottom:12px;">
-      <label style="display:block; color:#a0aec0; font-size:0.85rem; margin-bottom:4px;">Jumlah (Quantity)</label>
-      <input type="number" id="m-order-qty" value="1" min="1" oninput="window.calcOrderModalTotal()" style="width:100%; background:#0f172a; border:1px solid #334155; color:#fff; padding:10px; border-radius:6px; box-sizing:border-box;">
-    </div>
-
-    <div style="margin-bottom:12px;">
-      <label style="display:block; color:#a0aec0; font-size:0.85rem; margin-bottom:4px;">Metode Pembayaran / Tipe Transaksi</label>
-      <select id="m-order-paytype" onchange="window.calcOrderModalTotal()" style="width:100%; background:#0f172a; border:1px solid #334155; color:#fff; padding:10px; border-radius:6px; box-sizing:border-box;">
-        <option value="UP">Uang Putih (Rp)</option>
-        <option value="BM">Black Money ($)</option>
-        <option value="RM">Red Money ($)</option>
-      </select>
-    </div>
-
-    <div style="margin-bottom:12px;">
-      <label style="display:block; color:#a0aec0; font-size:0.85rem; margin-bottom:4px;">Harga Satuan</label>
-      <input type="text" id="m-order-unitprice" readonly style="width:100%; background:#0f172a; border:1px solid #334155; color:#fff; padding:10px; border-radius:6px; box-sizing:border-box;">
-    </div>
-
-    <div style="margin-bottom:12px;">
-      <label style="display:block; color:#a0aec0; font-size:0.85rem; margin-bottom:4px;">Total Yang Harus Dibayar</label>
-      <input type="text" id="m-order-total" readonly style="width:100%; background:#0f172a; border:1px solid #334155; color:#10b981; font-weight:bold; padding:10px; border-radius:6px; box-sizing:border-box;">
-    </div>
-
-    <div style="margin-bottom:20px;">
-      <label style="display:block; color:#a0aec0; font-size:0.85rem; margin-bottom:4px;">Catatan Tambahan / Buyer</label>
-      <input type="text" id="m-order-notes" placeholder="Contoh: Pembeli Anggota X / Kelompok Y" style="width:100%; background:#0f172a; border:1px solid #334155; color:#fff; padding:10px; border-radius:6px; box-sizing:border-box;">
-    </div>
-
-    <div style="display:flex; gap:10px;">
-      <button type="button" onclick="window.confirmOrderModal()" style="flex:1; background:#10b981; color:#fff; border:none; padding:12px; border-radius:6px; font-weight:bold; cursor:pointer;">KONFIRMASI TRANSAKSI</button>
-      <button type="button" onclick="window.closeOrderModal()" style="background:#ef4444; color:#fff; border:none; padding:12px 20px; border-radius:6px; font-weight:bold; cursor:pointer;">BATAL</button>
-    </div>
-  </div>
-</div>
     <!-- LOAD SCRIPT LOGIKA / BACKEND -->
     <script type="module" src="app.js"></script>
 </body>
